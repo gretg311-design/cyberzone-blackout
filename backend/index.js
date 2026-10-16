@@ -4,12 +4,11 @@ const cors = require('cors');
 
 const app = express();
 
-// 1. Переменные окружения
 const PORT = process.env.PORT || 3000;
 const MONGO_URL = process.env.DATABASE_URL;
 const TG_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-// 2. Настройка CORS (чтобы GitHub Pages / локальный фронт стучался на бэк)
+// 1. Настройка CORS и JSON
 app.use(cors({ 
   origin: '*', 
   methods: ['GET', 'POST', 'OPTIONS'], 
@@ -17,16 +16,34 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// 3. Подключение к MongoDB
-if (!MONGO_URL) {
-  console.warn('⚠️ Внимание: DATABASE_URL не задана!');
-} else {
-  mongoose.connect(MONGO_URL)
-    .then(() => console.log('✅ Успешное подключение к MongoDB'))
-    .catch(err => console.error('❌ Ошибка подключения к MongoDB:', err));
-}
+// 2. Оптимизированное подключение к MongoDB для Vercel
+let isConnected = false;
 
-// 4. Схема игрока в базе данных
+const connectDB = async () => {
+  if (isConnected) return;
+  if (!MONGO_URL) {
+    console.warn('⚠️ DATABASE_URL не задана');
+    return;
+  }
+  try {
+    const db = await mongoose.connect(MONGO_URL, {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 5000
+    });
+    isConnected = db.connections[0].readyState === 1;
+    console.log('✅ MongoDB подключена');
+  } catch (err) {
+    console.error('❌ Ошибка MongoDB:', err.message);
+  }
+};
+
+// Прослойка (middleware) для гарантированного подключения перед любым запросом
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
+// 3. Схема и модель пользователя
 const UserSchema = new mongoose.Schema({
   telegramId: { type: String, required: true, unique: true },
   username: { type: String, required: true },
@@ -41,97 +58,75 @@ const UserSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-const User = mongoose.model('User', UserSchema);
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
-// === API ЭНДПОИНТЫ ДЛЯ ФРОНТЕНДА ===
+// === РОУТЫ API ===
 
-// Проверка статуса сервера
 app.get('/', (req, res) => {
   res.json({ 
     status: 'ONLINE', 
     message: 'CyberZone: Blackout API Connected',
-    botActive: !!TG_BOT_TOKEN 
+    dbState: isConnected ? 'CONNECTED' : 'DISCONNECTED'
   });
 });
 
-// Регистрация / Авторизация при входе
+app.get('/api', (req, res) => {
+  res.json({ status: 'ONLINE', message: 'CyberZone API Root' });
+});
+
 app.post('/api/auth', async (req, res) => {
   try {
     const { telegramId, username, gender } = req.body;
-    if (!telegramId || !username) {
-      return res.status(400).json({ success: false, error: 'Недостаточно данных' });
-    }
+    if (!telegramId) return res.status(400).json({ success: false, error: 'No ID' });
 
     let user = await User.findOne({ telegramId });
     if (!user) {
-      user = new User({ telegramId, username, gender: gender || 'male' });
+      user = new User({ telegramId, username: username || "operator", gender: gender || "male" });
       await user.save();
     }
-
     res.json({ success: true, player: user });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
 });
 
-// Форсаж генератора (+20 энергии)
 app.post('/api/base/upgrade-generator', async (req, res) => {
   try {
     const { telegramId } = req.body;
     let user = await User.findOne({ telegramId });
-    
-    if (!user) {
-      // Фолбек если игрока еще нет в базе
-      return res.json({ success: true, currentEnergy: 140, message: 'Генератор разогнан (+20 энергии)' });
-    }
+    if (!user) return res.json({ success: true, currentEnergy: 140, message: 'Генератор разогнан (+20)' });
 
     user.resources.energy = Math.min(200, user.resources.energy + 20);
     await user.save();
-
-    res.json({ 
-      success: true, 
-      currentEnergy: user.resources.energy, 
-      message: 'Генератор успешно разогнан (+20 энергии)' 
-    });
+    res.json({ success: true, currentEnergy: user.resources.energy, message: 'Генератор разогнан (+20)' });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
 });
 
-// Поиск противника для ПвП-рейда
 app.get('/api/pvp/find-target', (req, res) => {
-  const enemiesPool = [
-    { name: "Убежище #4092 [Sektor]", lvl: 2, energy: 90, parts: 210, food: 35 },
-    { name: "Бункер «Омега» [Ghost]", lvl: 3, energy: 150, parts: 450, food: 80 },
-    { name: "Цитадель «Ржавчина» [Rust]", lvl: 1, energy: 60, parts: 120, food: 20 },
-    { name: "Терминал X [CyberLord]", lvl: 4, energy: 240, parts: 680, food: 120 }
-  ];
-  const target = enemiesPool[Math.floor(Math.random() * enemiesPool.length)];
-  res.json({ success: true, target });
-});
-
-// Проведение ПвП атаки
-app.post('/api/pvp/attack', async (req, res) => {
   res.json({ 
     success: true, 
-    victory: true, 
-    loot: { parts: 320, energy: 80 }, 
-    message: '🏆 Победа! Захвачено: +320 деталей и +80 энергии.' 
+    target: { name: "Убежище #4092 [Sektor]", lvl: 2, energy: 90, parts: 210, food: 35 } 
   });
 });
 
-// Наем специалиста
-app.post('/api/squad/hire', async (req, res) => {
-  res.json({ success: true, message: 'Новый специалист успешно завербован.' });
+app.post('/api/pvp/attack', (req, res) => {
+  res.json({ success: true, message: '🏆 Победа! Захвачены ресурсы.' });
 });
 
-// Покупка на Черном рынке
-app.post('/api/market/buy', async (req, res) => {
-  const { itemName, stars } = req.body;
-  res.json({ success: true, message: `Приобретено: "${itemName}" за ⭐${stars}` });
+app.post('/api/squad/hire', (req, res) => {
+  res.json({ success: true, message: 'Боец нанят.' });
 });
 
-// Запуск сервера
-app.listen(PORT, () => {
-  console.log(`🚀 Сервер запущен на порту ${PORT}`);
+app.post('/api/market/buy', (req, res) => {
+  res.json({ success: true, message: 'Товар куплен.' });
 });
+
+// Запуск для локальной разработки
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => console.log(`🚀 Порт: ${PORT}`));
+}
+
+// Обязательный экспорт для Vercel
+module.exports = app;
