@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CyberZone: Blackout</title>
+  
+  <script>
+    window.Telegram = window.Telegram || {};
+    window.Telegram.WebApp = {
+      expand: function(){},
+      setHeaderColor: function(){},
+      initDataUnsafe: { 
+        user: { 
+          id: 58923411, 
+          username: "cyber_operator", 
+          first_name: "Alex" 
+        } 
+      },
+      HapticFeedback: { impactOccurred: function(){}, notificationOccurred: function(){} }
+    };
+  </script>
+  
+  <style>
+    :root {
+      --bg-color: #07090e;
+      --card-bg: #0e131f;
+      --card-border: #1a2336;
+      --accent-neon: #00ffcc;
+      --accent-danger: #ff0055;
+      --accent-warn: #ffaa00;
+      --accent-star: #ffd700;
+      --text-main: #e0fbfc;
+      --text-sub: #6b7c96;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Courier New', Courier, monospace;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 10px 10px 80px 10px;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    .ico {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      vertical-align: middle;
+      display: inline-block;
+    }
+
+    /* === ЭКРАН ЗАГРУЗКИ (LOADER 12-15 СЕКУНД) === */
+    #loader-screen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #05070a;
+      z-index: 20000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 30px;
+      text-align: center;
+      transition: opacity 0.5s ease;
+    }
+
+    .loader-terminal {
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .loader-logo {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--accent-neon);
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(0,255,204,0.4);
+    }
+
+    .loader-status-text {
+      font-size: 11px;
+      color: var(--accent-warn);
+      margin-bottom: 20px;
+      height: 16px;
+    }
+
+    .loader-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: #0e131f;
+      border: 1px solid var(--card-border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+
+    .loader-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: var(--accent-neon);
+      box-shadow: 0 0 10px var(--accent-neon);
+      transition: width 0.2s linear;
+    }
+
+    .loader-percent {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    /* Модалка регистрации */
+    #reg-modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(7, 9, 14, 0.98);
+      backdrop-filter: blur(10px);
+      z-index: 10000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+    }
+
+    .reg-card {
+      background: var(--card-bg);
+      border: 1px solid var(--accent-neon);
+      box-shadow: 0 0 30px rgba(0, 255, 204, 0.15);
+      border-radius: 12px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .reg-title {
+      font-size: 16px;
+      color: var(--accent-neon);
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .reg-subtitle {
+      font-size: 10px;
+      color: var(--text-sub);
+      margin-bottom: 15px;
+      border-bottom: 1px dashed var(--card-border);
+      padding-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 10px;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+    }
+
+    .cyber-input {
+      width: 100%;
+      background: #05070a;
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 10px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .cyber-input:focus { border-color: var(--accent-neon); }
+    .input-error { font-size: 9px; color: var(--accent-danger); margin-top: 3px; display: none; }
+
+    /* Шторка выбора пола */
+    .custom-select {
+      position: relative;
+      width: 100%;
+      background: #05070a;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .select-trigger {
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-main);
+    }
+
+    .select-options {
+      position: absolute;
+      top: 105%; left: 0; right: 0;
+      background: #0e131f;
+      border: 1px solid var(--accent-neon);
+      border-radius: 6px;
+      display: none;
+      z-index: 50;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+      overflow: hidden;
+    }
+
+    .custom-select.open .select-options { display: block; }
+
+    .select-option {
+      padding: 12px 10px;
+      transition: background 0.1s;
+      border-bottom: 1px solid #141d2f;
+    }
+
+    .select-option:last-child { border-bottom: none; }
+    .select-option:hover {
+      background: rgba(0, 255, 204, 0.1);
+      color: var(--accent-neon);
+    }
+
+    .check-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    .cyber-checkbox {
+      appearance: none;
+      width: 18px; height: 18px;
+      background: #05070a;
+      border: 1px solid var(--card-border);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .cyber-checkbox:checked {
+      background: var(--accent-neon);
+      border-color: var(--accent-neon);
+    }
+
+    .cyber-checkbox:checked::after {
+      content: '✓';
+      position: absolute;
+      color: #000;
+      font-weight: bold;
+      font-size: 12px;
+      top: -1px; left: 3px;
+    }
+
+    /* Шапка */
+    .cyber-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--card-border);
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+
+    .user-info h2 {
+      font-size: 14px;
+      color: var(--accent-neon);
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tag { font-size: 9px; color: var(--text-sub); display: block; margin-bottom: 2px; }
+
+    .status-pulse {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      background: rgba(0, 255, 204, 0.05);
+      border: 1px solid rgba(0, 255, 204, 0.2);
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: var(--accent-neon);
+    }
+
+    .pulse-dot {
+      width: 6px; height: 6px;
+      background-color: var(--accent-neon);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-neon);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px var(--accent-neon); }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+
+    .screen { display: none; }
+    .screen.active {
+      display: block;
+      animation: nativeFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes nativeFade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Ресурсы */
+    .resources-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .res-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 10px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .res-label { display: block; font-size: 9px; color: var(--text-sub); }
+    .res-value { font-size: 14px; font-weight: bold; color: #fff; }
+    .res-value small { font-size: 10px; color: var(--text-sub); }
+
+    .cyber-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 14px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .cyber-card.highlight {
+      border-color: rgba(255, 0, 85, 0.4);
+      box-shadow: inset 0 0 15px rgba(255, 0, 85, 0.05);
+    }
+
+    .card-title-bar {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .warning-text { color: var(--accent-warn); font-size: 10px; }
+    .status-desc { font-size: 11px; color: var(--text-sub); margin-bottom: 10px; line-height: 1.4; }
+
+    .progress-container {
+      background: #05070a;
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      border: 1px solid #141d2f;
+    }
+
+    .progress-bar {
+      background: var(--accent-neon);
+      height: 100%;
+      box-shadow: 0 0 8px var(--accent-neon);
+    }
+
+    .task-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      background: #070a10;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #121a29;
+    }
+
+    .timer { color: var(--accent-warn); font-weight: bold; }
+
+    /* === СТИЛИ ПРОФИЛЯ И НАСТРОЕК === */
+    .profile-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      padding: 6px 0;
+      border-bottom: 1px solid #141d2f;
+    }
+    .profile-info-row:last-child { border-bottom: none; }
+    .profile-val { color: var(--accent-neon); font-weight: bold; }
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      padding: 8px 0;
+      border-bottom: 1px solid #141d2f;
+    }
+
+    /* Кастомный чекбокс-тумблер */
+    .switch {
+      position: relative; display: inline-block; width: 34px; height: 18px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #05070a; border: 1px solid var(--card-border); transition: .2s; border-radius: 18px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 12px; width: 12px; left: 2px; bottom: 2px;
+      background-color: var(--text-sub); transition: .2s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--accent-neon); border-color: var(--accent-neon); }
+    input:checked + .slider:before { transform: translateX(16px); background-color: #000; }
+
+    .promo-box {
+      display: flex; gap: 8px; margin-top: 8px;
+    }
+
+    /* Карта */
+    .map-container {
+      position: relative; width: 100%; height: 60vh;
+      background: #030508; border: 1px solid var(--card-border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .map-canvas {
+      position: absolute; width: 100%; height: 100%;
+      background-image: linear-gradient(rgba(26, 35, 54, 0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(26, 35, 54, 0.15) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .map-road-h { position: absolute; width: 100%; height: 6px; background: #121a2b; }
+    .map-road-v { position: absolute; height: 100%; width: 6px; background: #121a2b; }
+    .map-pin {
+      position: absolute; transform: translate(-50%, -50%);
+      background: #0e131f; border: 1px solid var(--card-border);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6); z-index: 10;
+    }
+    .map-pin.safe { border-color: var(--accent-neon); }
+    .map-pin.warn { border-color: var(--accent-warn); }
+    .map-pin.danger { border-color: var(--accent-danger); background: rgba(255, 0, 85, 0.1); }
+    .map-pin.hq { border-color: var(--accent-neon); background: rgba(0, 255, 204, 0.15); }
+    .pin-title { font-size: 9px; font-weight: bold; color: var(--text-main); white-space: nowrap; }
+    .pin-icon { font-size: 14px; }
+
+    /* Атака */
+    .target-card {
+      background: #070a10; border: 1px solid var(--card-border);
+      border-radius: 8px; padding: 12px; margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .target-info h4 { font-size: 12px; color: var(--accent-danger); margin-bottom: 3px; }
+    .target-info p { font-size: 9px; color: var(--text-sub); }
+    .loot-preview {
+      display: flex; gap: 10px; font-size: 10px; color: var(--accent-neon);
+      margin: 8px 0; background: #05070a; padding: 6px 10px; border-radius: 4px; border: 1px solid #121a29;
+    }
+
+    /* Шторки */
+    #sector-modal {
+      position: fixed; bottom: -100%; left: 0; right: 0;
+      background: #0b101a; border-top: 2px solid var(--accent-neon);
+      border-radius: 16px 16px 0 0; padding: 16px; z-index: 500;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+      transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #sector-modal.active { bottom: 0; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .modal-title { font-size: 14px; font-weight: bold; color: var(--accent-neon); }
+    .close-btn { background: none; border: none; color: var(--text-sub); font-size: 18px; cursor: pointer; padding: 4px; }
+    .sector-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+    .stat-box { background: #05070a; border: 1px solid var(--card-border); padding: 8px; border-radius: 6px; font-size: 10px; }
+    .stat-box span { display: block; color: var(--text-sub); font-size: 8px; margin-bottom: 2px; }
+
+    /* Магазин */
+    .market-header {
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.2);
+      padding: 10px 14px; border-radius: 8px; margin-bottom: 12px;
+    }
+    .market-balance { display: flex; align-items: center; gap: 6px; color: var(--accent-star); font-weight: bold; font-size: 13px; }
+    .market-item {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #070a10; padding: 12px; border-radius: 8px; border: 1px solid #121a29; margin-bottom: 8px;
+    }
+    .market-info h4 { font-size: 12px; color: var(--text-main); margin-bottom: 2px; }
+    .market-info p { font-size: 9px; color: var(--text-sub); }
+    .star-btn {
+      background: #1a1e12; border: 1px solid var(--accent-star); color: var(--accent-star);
+      padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;
+    }
+
+    /* Кнопки */
+    .cyber-btn {
+      width: 100%; padding: 10px; border: none; font-weight: bold; cursor: pointer;
+      border-radius: 6px; text-transform: uppercase; letter-spacing: 1px; font-size: 11px;
+      display: flex; justify-content: center; align-items: center; gap: 6px;
+    }
+    .cyber-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .cyber-btn.primary { background: var(--accent-neon); color: #07090e; box-shadow: 0 0 10px rgba(0, 255, 204, 0.2); }
+    .cyber-btn.danger { background: var(--accent-danger); color: #fff; box-shadow: 0 0 10px rgba(255, 0, 85, 0.2); }
+    .cyber-btn.small { width: auto; padding: 6px 10px; font-size: 10px; background: #192338; color: var(--accent-neon); border: 1px solid var(--accent-neon); }
+
+    /* Навигация */
+    .cyber-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--card-bg); display: flex; justify-content: space-around;
+      padding: 8px 0; border-top: 2px solid var(--card-border); z-index: 100;
+    }
+    .nav-btn {
+      background: none; border: none; color: var(--text-sub); font-size: 9px;
+      display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; flex: 1;
+    }
+    .nav-btn.active { color: var(--accent-neon); font-weight: bold; }
+
+    /* Тост */
+    #toast-container {
+      position: fixed; top: -100px; left: 10px; right: 10px;
+      background: #111a2e; border: 1px solid var(--accent-neon);
+      box-shadow: 0 5px 25px rgba(0, 255, 204, 0.25); padding: 12px 16px;
+      border-radius: 8px; z-index: 9999; display: flex; align-items: center; gap: 12px;
+      transition: top 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #toast-container.show { top: 15px; }
+    .toast-text { font-size: 11px; color: var(--text-main); font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <!-- ЭКРАН ЗАГРУЗКИ (LOADER НА 14 СЕКУНД) -->
+  <div id="loader-screen">
+    <div class="loader-terminal">
+      <div class="loader-logo">CYBERZONE // BLACKOUT</div>
+      <div class="loader-status-text" id="loader-text">Инициализация нейро-модуля...</div>
+      <div class="loader-bar-bg">
+        <div class="loader-bar-fill" id="loader-fill"></div>
+      </div>
+      <div class="loader-percent" id="loader-percent">0%</div>
+    </div>
+  </div>
+
+  <!-- Модалка регистрации -->
+  <div id="reg-modal">
+    <div class="reg-card">
+      <h2 class="reg-title">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        ИНИЦИАЛИЗАЦИЯ
+      </h2>
+      <p class="reg-subtitle">Вход в автономную сеть CyberZone</p>
+
+      <div class="form-group">
+        <label>ПОЗЫВНОЙ ОПЕРАТОРА (Латиница / Кириллица)</label>
+        <input type="text" id="reg-name" class="cyber-input" placeholder="Например: Skliff" oninput="validateForm()">
+        <div id="name-error" class="input-error">Разрешены только буквы</div>
+      </div>
+
+      <div class="form-group">
+        <label>НЕЙРО-ИДЕНТИФИКАЦИЯ (ПОЛ)</label>
+        <div class="custom-select" id="gender-select" onclick="toggleDropdown(event)">
+          <div class="select-trigger">
+            <span id="selected-gender-text">Мужской [М]</span>
+            <svg class="ico" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="select-options">
+            <div class="select-option" onclick="selectGender('male', 'Мужской [М]')">Мужской [М]</div>
+            <div class="select-option" onclick="selectGender('female', 'Женский [Ж]')">Женский [Ж]</div>
+            <div class="select-option" onclick="selectGender('unspecified', 'Не указан [X]')">Не указан [X]</div>
+          </div>
+        </div>
+        <input type="hidden" id="reg-gender" value="male">
+      </div>
+
+      <div class="check-group">
+        <label class="check-item">
+          <input type="checkbox" id="check-human" class="cyber-checkbox" onchange="validateForm()">
+          <span>Я не автономный ИИ-бот (Не робот)</span>
+        </label>
+        <label class="check-item">
+          <input type="checkbox" id="check-terms" class="cyber-checkbox" onchange="validateForm()">
+          <span>Согласен с условиями и юр. информацией</span>
+        </label>
+        <label class="check-item">
+          <input type="checkbox" id="check-age" class="cyber-checkbox" onchange="validateForm()">
+          <span>Подтверждаю совершеннолетие (18+)</span>
+        </label>
+      </div>
+
+      <button id="reg-btn" class="cyber-btn primary" disabled onclick="completeRegistration()">
+        <svg class="ico" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        ВОЙТИ В СИСТЕМУ
+      </button>
+    </div>
+  </div>
+
+  <!-- Шторка уведомления -->
+  <div id="toast-container">
+    <span id="toast-icon-box">
+      <svg class="ico" style="color:var(--accent-neon)" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    </span>
+    <span class="toast-text" id="toast-message">Система инициализирована</span>
+  </div>
+
+  <div id="app">
+    <!-- Шапка профиля -->
+    <header class="cyber-header">
+      <div class="user-info">
+        <span class="tag" id="user-tag">ID: -- // @username</span>
+        <h2 id="username">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="display-name">CMD_GUEST</span>
+        </h2>
+      </div>
+      <div class="status-pulse">
+        <span class="pulse-dot"></span>
+        <span class="pulse-text">SYNC</span>
+      </div>
+    </header>
+
+    <!-- Экраны приложения -->
+    <div class="screens-container">
+      
+      <!-- ЭКРАН 1: БАЗА -->
+      <section id="screen-base" class="screen active">
+        <div class="resources-grid">
+          <div class="res-card">
+            <svg class="ico" style="color:var(--accent-neon)" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <div class="res-data">
+              <span class="res-label">ЭНЕРГИЯ</span>
+              <span class="res-value" id="res-energy">120<small>/200</small></span>
+            </div>
+          </div>
+
+          <div class="res-card">
+            <svg class="ico" style="color:var(--accent-neon)" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <div class="res-data">
+              <span class="res-label">ДЕТАЛИ</span>
+              <span class="res-value" id="res-parts">450</span>
+            </div>
+          </div>
+
+          <div class="res-card">
+            <svg class="ico" style="color:var(--accent-neon)" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <div class="res-data">
+              <span class="res-label">ПРИПАСЫ</span>
+              <span class="res-value" id="res-food">85</span>
+            </div>
+          </div>
+
+          <div class="res-card">
+            <svg class="ico" style="color:var(--accent-neon)" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <div class="res-data">
+              <span class="res-label">ЛЮДИ</span>
+              <span class="res-value" id="res-people">12<small>/15</small></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cyber-card">
+          <div class="card-title-bar">
+            <span>УБЕЖИЩЕ [УР. 1]</span>
+            <span class="warning-text">ГЕНЕРАТОР: 60%</span>
+          </div>
+          <p class="status-desc">Система жизнеобеспечения работает на резервных аккумуляторах. Требуется обслуживание.</p>
+          <div class="progress-container">
+            <div class="progress-bar" style="width: 60%;"></div>
+          </div>
+          <button class="cyber-btn primary" onclick="handleAction('upgrade_gen')">
+            <svg class="ico" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Форсаж генератора (+Энергия)
+          </button>
+        </div>
+
+        <div class="cyber-card">
+          <h3>АКТИВНЫЕ ПРОЦЕССЫ</h3>
+          <div class="task-row">
+            <span>
+              <svg class="ico" style="color:var(--accent-warn)" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              Ремонт периметра
+            </span>
+            <span class="timer" id="timer-repair">02:14:50</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ЭКРАН 2: КАРТА МЕГАПОЛИСА -->
+      <section id="screen-map" class="screen">
+        <div class="map-container">
+          <div class="map-canvas">
+            <div class="map-road-h" style="top: 25%;"></div>
+            <div class="map-road-h" style="top: 60%;"></div>
+            <div class="map-road-h" style="top: 85%;"></div>
+            <div class="map-road-v" style="left: 30%;"></div>
+            <div class="map-road-v" style="left: 70%;"></div>
+          </div>
+
+          <div class="map-pin safe" style="top: 15%; left: 20%;" onclick="openSectorModal('SECTOR_01', 'ПРОМЗОНА «СЕВЕР»', 'Низкий [10%]', 'Свободные заброшки', 'Детали ⚙️, Припасы 🥫', '01')">
+            <span class="pin-icon">⚙️</span>
+            <span class="pin-title">SEC-01</span>
+          </div>
+          <div class="map-pin warn" style="top: 20%; left: 55%;" onclick="openSectorModal('SECTOR_02', 'ТОРГОВЫЙ ХАБ «РИНГ»', 'Средний [45%]', 'Синдикат «Shadows»', 'Энергия ⚡, Валюта 💰', '02')">
+            <span class="pin-icon">🏬</span>
+            <span class="pin-title">SEC-02</span>
+          </div>
+          <div class="map-pin danger" style="top: 45%; left: 50%;" onclick="openSectorModal('SECTOR_03', 'ЦЕНТРАЛЬНАЯ ТЭЦ-4', 'КРИТИЧЕСКИЙ [90%]', 'ВРАЖЕСКИЙ АЛЬЯНС', 'ЭНЕРГИЯ ⚡ (+50/час)', '03')">
+            <span class="pin-icon">⚡</span>
+            <span class="pin-title" style="color:var(--accent-danger)">ТЭЦ-4</span>
+          </div>
+          <div class="map-pin hq" style="top: 50%; left: 20%;" onclick="openSectorModal('SECTOR_07', 'ШТАБ-КВАРТИРА [ТВОЯ БАЗА]', 'Безопасно [0%]', 'Твой отряд', 'База генератора', '07')">
+            <span class="pin-icon">🏰</span>
+            <span class="pin-title" style="color:var(--accent-neon)">ШТАБ</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ЭКРАН 3: АТАКА (PVP РЕЙДЫ) -->
+      <section id="screen-attack" class="screen">
+        <div class="cyber-card highlight">
+          <div class="card-title-bar">
+            <span>ТАКТИЧЕСКИЙ РАДАР ПВП</span>
+            <span class="warning-text">ДОСТУПНО РЕЙДОВ: 3/3</span>
+          </div>
+          <p class="status-desc">Сканируйте периметр, выбирайте вражеское убежище и отправляйте отряд на штурм.</p>
+          <button class="cyber-btn primary" onclick="findNewTarget()">
+            <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Найти противника (10 ⚡)
+          </button>
+        </div>
+
+        <div id="target-container">
+          <div class="cyber-card" id="enemy-card" style="display:none;">
+            <div class="target-card" style="border:none; background:none; padding:0; margin:0;">
+              <div class="target-info">
+                <h4 id="enemy-name">Убежище #8841 [Phantom]</h4>
+                <p>Уровень базы: <b>[Ур. 2]</b> • Защита: 45%</p>
+              </div>
+              <span class="badge" style="color:var(--accent-danger); border-color:var(--accent-danger);">ВРАГ</span>
+            </div>
+            <div class="loot-preview">
+              <span>Добыча:</span>
+              <b>⚡ 140</b> • <b>⚙️ 320</b> • <b>🥫 50</b>
+            </div>
+            <button class="cyber-btn danger" onclick="launchPvPAttack()">
+              <svg class="ico" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              ВЫЙДЕМ НА ШТУРМ БАЗЫ
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ЭКРАН 4: ОТРЯД -->
+      <section id="screen-squad" class="screen">
+        <div class="cyber-card">
+          <h3>СПЕЦИАЛИСТЫ УБЕЖИЩА</h3>
+          <div class="unit-card">
+            <div class="unit-avatar">
+              <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <div class="unit-details">
+              <h4>Кибер-Инженер</h4>
+              <p>Эффективность ремонта: +15%</p>
+            </div>
+            <span class="unit-lvl">LVL. 2</span>
+          </div>
+          <button class="cyber-btn primary" onclick="handleAction('hire_unit')">
+            <svg class="ico" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Нанять бойца (50 Деталей)
+          </button>
+        </div>
+      </section>
+
+      <!-- ЭКРАН 5: МАГАЗИН (ЧЕРНЫЙ РЫНОК) -->
+      <section id="screen-market" class="screen">
+        <div class="market-header">
+          <div>
+            <div style="font-size:11px; font-weight:bold; color:var(--text-main);">ЧЕРНЫЙ РЫНОК</div>
+            <div style="font-size:9px; color:var(--text-sub);">Официальные протоколы Stars</div>
+          </div>
+          <div class="market-balance">⭐ <span id="stars-count">150</span></div>
+        </div>
+
+        <div class="cyber-card">
+          <h3>БУСТЫ И СНАБЖЕНИЕ</h3>
+          <div class="market-item">
+            <div class="market-info">
+              <h4>⚡ Аккумулятор</h4>
+              <p>Мгновенно восстанавливает 100% энергии убежища</p>
+            </div>
+            <button class="star-btn" onclick="buyItem('Аккумулятор', 15)"><span>⭐ 15</span></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ЭКРАН 6: ПРОФИЛЬ И НАСТРОЙКИ (ВМЕСТО КЛАНОВ) -->
+      <section id="screen-profile" class="screen">
+        <!-- Блок профиля оператора -->
+        <div class="cyber-card">
+          <h3>ПРОФИЛЬ ОПЕРАТОРА</h3>
+          <div style="margin-top: 10px;">
+            <div class="profile-info-row">
+              <span>ПОЗЫВНОЙ:</span>
+              <span class="profile-val" id="profile-name-display">CMD_USER</span>
+            </div>
+            <div class="profile-info-row">
+              <span>TELEGRAM ID:</span>
+              <span class="profile-val" id="profile-tg-id">58923411</span>
+            </div>
+            <div class="profile-info-row">
+              <span>СТАТУС СЕТИ:</span>
+              <span class="profile-val" style="color:var(--accent-neon)">АКТИВЕН</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Настройки профиля -->
+        <div class="cyber-card">
+          <h3>НАСТРОЙКИ СИСТЕМЫ</h3>
+          <div style="margin-top: 10px;">
+            <div class="form-group" style="margin-bottom:10px;">
+              <label>СМЕНИТЬ ПОЗЫВНОЙ</label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="new-name-input" class="cyber-input" placeholder="Новый ник...">
+                <button class="cyber-btn small" onclick="changeNickname()">Сохранить</button>
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <span>Звуковые оповещения и вибрация</span>
+              <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="settings-row">
+              <span>Уведомления о рейдах врагов</span>
+              <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Промокоды -->
+        <div class="cyber-card">
+          <h3>АКТИВАЦИЯ ПРОМОКОДА</h3>
+          <p class="status-desc">Введите секретный код сети для получения бонусов.</p>
+          <div class="promo-box">
+            <input type="text" id="promo-input" class="cyber-input" placeholder="BLACKOUT2026">
+            <button class="cyber-btn small" onclick="activatePromo()">Активировать</button>
+          </div>
+        </div>
+
+        <!-- Информация о Синдикате (Клане) -->
+        <div class="cyber-card">
+          <div class="syndicate-header">
+            <h3>СИНДИКАТ: «NEON GHOSTS»</h3>
+            <span class="badge">ТОП #4</span>
+          </div>
+          <p class="status-desc">Чат-альянс: <a href="#" class="cyber-link">@neonghosts_chat</a></p>
+          
+          <div style="font-size:10px; color:var(--text-sub); margin-bottom:8px; line-height:1.4;">
+            <b>Правила синдиката:</b><br>
+            1. Ежедневный взнос в общую казну ТЭЦ.<br>
+            2. Запрещен огонь по союзникам в радиусе сектора.<br>
+            3. Общая явка на штурм узлов обязательна.
+          </div>
+
+          <div class="syndicate-stats">
+            <div>Участников: <b>24 / 30</b></div>
+            <div>Казна: <b>1,420 ⚡</b></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Нативная шторка секторов -->
+    <div id="sector-modal">
+      <div class="modal-header">
+        <div class="modal-title" id="sec-modal-title">SECTOR_01</div>
+        <button class="close-btn" onclick="closeSectorModal()">✕</button>
+      </div>
+      <div style="font-size:11px; color:var(--text-sub);" id="sec-modal-desc">Район города</div>
+      <div class="sector-stats-grid">
+        <div class="stat-box"><span>УГРОЗА</span><b id="sec-modal-hazard" style="color:var(--accent-warn)">Средний</b></div>
+        <div class="stat-box"><span>КОНТРОЛЬ</span><b id="sec-modal-control">Банды</b></div>
+      </div>
+      <button class="cyber-btn primary" onclick="launchExpedition()">⚔️ ОТПРАВИТЬ ОТРЯД</button>
+    </div>
+
+    <!-- Нижнее меню (6 кнопок, последняя — Профиль) -->
+    <nav class="cyber-nav">
+      <button class="nav-btn active" onclick="switchScreen('base', this)">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>База</span>
+      </button>
+      <button class="nav-btn" onclick="switchScreen('map', this)">
+        <svg class="ico" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        <span>Карта</span>
+      </button>
+      <button class="nav-btn" onclick="switchScreen('attack', this)">
+        <svg class="ico" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span>Атака</span>
+      </button>
+      <button class="nav-btn" onclick="switchScreen('squad', this)">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Отряд</span>
+      </button>
+      <button class="nav-btn" onclick="switchScreen('market', this)">
+        <svg class="ico" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span>Рынок</span>
+      </button>
+      <button class="nav-btn" onclick="switchScreen('profile', this)">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Профиль</span>
+      </button>
+    </nav>
+  </div>
+
+  <script>
+    // Имитация загрузки с БД (14 секунд с красивыми надписями)
+    const loadingTexts = [
+      "Инициализация нейро-модуля...",
+      "Установка защищенного соединения с сервером...",
+      "Синхронизация баз данных PostgreSQL...",
+      "Загрузка карты секторов мегаполиса...",
+      "Проверка протоколов Синдиката...",
+      "Запуск ядра CyberZone: Blackout..."
+    ];
+
+    window.onload = function() {
+      let progress = 0;
+      let textIndex = 0;
+      const fillBar = document.getElementById('loader-fill');
+      const percentText = document.getElementById('loader-percent');
+      const statusText = document.getElementById('loader-text');
+      const loaderScreen = document.getElementById('loader-screen');
+
+      // Общая длительность около 14 секунд (140 шагов по 100мс)
+      const loadInterval = setInterval(() => {
+        progress += 0.75;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(loadInterval);
+          loaderScreen.style.opacity = '0';
+          setTimeout(() => { loaderScreen.style.display = 'none'; }, 500);
+        }
+
+        fillBar.style.width = progress + '%';
+        percentText.innerText = Math.floor(progress) + '%';
+
+        // Меняем цитаты каждые 20%
+        let newTextIndex = Math.floor((progress / 100) * loadingTexts.length);
+        if (newTextIndex >= loadingTexts.length) newTextIndex = loadingTexts.length - 1;
+        if (newTextIndex !== textIndex) {
+          textIndex = newTextIndex;
+          statusText.innerText = loadingTexts[textIndex];
+        }
+      }, 100);
+
+      // Данные Telegram
+      const tgUser = window.Telegram.WebApp.initDataUnsafe?.user || { id: "58923411", username: "cyber_operator" };
+      document.getElementById('user-tag').innerText = `ID: ${tgUser.id} // @${tgUser.username || 'unknown'}`;
+      document.getElementById('profile-tg-id').innerText = tgUser.id;
+
+      const savedUser = localStorage.getItem('cyberzone_user');
+      if (savedUser) {
+        document.getElementById('reg-modal').style.display = 'none';
+        document.getElementById('display-name').innerText = savedUser;
+        document.getElementById('profile-name-display').innerText = savedUser;
+      }
+    };
+
+    function toggleDropdown(event) {
+      event.stopPropagation();
+      document.getElementById('gender-select').classList.toggle('open');
+    }
+
+    function selectGender(value, label) {
+      document.getElementById('reg-gender').value = value;
+      document.getElementById('selected-gender-text').innerText = label;
+      document.getElementById('gender-select').classList.remove('open');
+    }
+
+    window.addEventListener('click', function() {
+      const dropdown = document.getElementById('gender-select');
+      if (dropdown) dropdown.classList.remove('open');
+    });
+
+    function validateForm() {
+      const nameInput = document.getElementById('reg-name');
+      const name = nameInput.value.trim();
+      const errorDiv = document.getElementById('name-error');
+      
+      const validNameRegex = /^[A-Za-zА-Яа-яЁёІіЇїЄєҐґ0-9\s_-]+$/;
+      let isNameValid = false;
+      if (name.length >= 2) {
+        if (validNameRegex.test(name)) {
+          errorDiv.style.display = 'none';
+          nameInput.style.borderColor = 'var(--accent-neon)';
+          isNameValid = true;
+        } else {
+          errorDiv.style.display = 'block';
+          nameInput.style.borderColor = 'var(--accent-danger)';
+        }
+      } else {
+        errorDiv.style.display = 'none';
+        nameInput.style.borderColor = 'var(--card-border)';
+      }
+
+      const human = document.getElementById('check-human').checked;
+      const terms = document.getElementById('check-terms').checked;
+      const age = document.getElementById('check-age').checked;
+
+      document.getElementById('reg-btn').disabled = !(isNameValid && human && terms && age);
+    }
+
+    function completeRegistration() {
+      const name = document.getElementById('reg-name').value.trim();
+      localStorage.setItem('cyberzone_user', name);
+      document.getElementById('display-name').innerText = name;
+      document.getElementById('profile-name-display').innerText = name;
+      document.getElementById('reg-modal').style.display = 'none';
+      showToast(`Добро пожаловать в сеть, оператор ${name}!`);
+    }
+
+    // Смена позывного в настройках профиля
+    function changeNickname() {
+      const newName = document.getElementById('new-name-input').value.trim();
+      const validNameRegex = /^[A-Za-zА-Яа-яЁёІіЇїЄєҐґ0-9\s_-]+$/;
+      if (newName.length >= 2 && validNameRegex.test(newName)) {
+        localStorage.setItem('cyberzone_user', newName);
+        document.getElementById('display-name').innerText = newName;
+        document.getElementById('profile-name-display').innerText = newName;
+        document.getElementById('new-name-input').value = '';
+        showToast(`Позывной успешно изменен на: ${newName}`);
+      } else {
+        showToast('Ошибка! Проверьте имя (только буквы).');
+      }
+    }
+
+    // Промокоды
+    function activatePromo() {
+      const code = document.getElementById('promo-input').value.trim();
+      if (code.toUpperCase() === 'BLACKOUT2026') {
+        showToast('🎁 Промокод активирован! Получено +100 энергии и +200 деталей.');
+        document.getElementById('promo-input').value = '';
+      } else {
+        showToast('❌ Недействительный или просроченный код.');
+      }
+    }
+
+    function switchScreen(screenName, btnElement) {
+      closeSectorModal();
+      document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+      document.getElementById(`screen-${screenName}`).classList.add('active');
+
+      document.querySelectorAll('.cyber-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
+      btnElement.classList.add('active');
+
+      if (window.Telegram.WebApp.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+      }
+    }
+
+    const enemiesPool = [
+      { name: "Убежище #4092 [Sektor]", lvl: 2, energy: 90, parts: 210, food: 35 },
+      { name: "Бункер «Омега» [Ghost]", lvl: 3, energy: 150, parts: 450, food: 80 }
+    ];
+
+    function findNewTarget() {
+      showToast('📡 Сканирование секторов сети...');
+      setTimeout(() => {
+        const randomEnemy = enemiesPool[Math.floor(Math.random() * enemiesPool.length)];
+        document.getElementById('enemy-name').innerText = randomEnemy.name;
+        document.getElementById('enemy-card').style.display = 'block';
+        showToast('Цель обнаружена! Готовьте отряд.');
+      }, 800);
+    }
+
+    function launchPvPAttack() {
+      showToast('⚔️ Штурм базы противника начался!');
+      setTimeout(() => {
+        showToast('🏆 Победа! Захвачено: +320 деталей и +80 энергии.');
+        document.getElementById('enemy-card').style.display = 'none';
+      }, 1500);
+    }
+
+    let currentSelectedSector = '';
+    function openSectorModal(id, title, hazard, control, loot, code) {
+      currentSelectedSector = id;
+      document.getElementById('sec-modal-title').innerText = `${id}: ${title}`;
+      document.getElementById('sec-modal-desc').innerText = `Код сканера: [SEC-${code}]`;
+      document.getElementById('sec-modal-hazard').innerText = hazard;
+      document.getElementById('sec-modal-control').innerText = control;
+      document.getElementById('sector-modal').classList.add('active');
+    }
+
+    function closeSectorModal() {
+      document.getElementById('sector-modal').classList.remove('active');
+    }
+
+    function launchExpedition() {
+      closeSectorModal();
+      showToast(`🛡️ Отряд выдвинулся на разведку в ${currentSelectedSector}!`);
+    }
+
+    let toastTimer = null;
+    function showToast(message) {
+      const container = document.getElementById('toast-container');
+      document.getElementById('toast-message').innerText = message;
+      container.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { container.classList.remove('show'); }, 2500);
+    }
+
+    function handleAction(actionType) {
+      switch(actionType) {
+        case 'upgrade_gen': showToast('Генератор разогнан! Получено +20 энергии.'); break;
+        case 'hire_unit': showToast('Новый специалист успешно завербован.'); break;
+      }
+    }
+
+    function buyItem(itemName, stars) {
+      showToast(`Приобретено: "${itemName}" за ⭐${stars}`);
+    }
+  </script>
+</body>
+</html>
