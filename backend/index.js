@@ -1,75 +1,137 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
+
+// 1. Переменные окружения
 const PORT = process.env.PORT || 3000;
+const MONGO_URL = process.env.DATABASE_URL;
+const TG_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-// Настройка CORS (чтобы фронт с GitHub / локалки мог стучаться на бэк)
-app.use(cors({
-  origin: '*', // Для тестов разрешаем отовсюду. Потом можно заменить на 'https://твой-логин.github.io'
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type']
+// 2. Настройка CORS (чтобы GitHub Pages / локальный фронт стучался на бэк)
+app.use(cors({ 
+  origin: '*', 
+  methods: ['GET', 'POST', 'OPTIONS'], 
+  allowedHeaders: ['Content-Type'] 
 }));
-
 app.use(express.json());
 
-// Базовый роут для проверки живой ли сервер
+// 3. Подключение к MongoDB
+if (!MONGO_URL) {
+  console.warn('⚠️ Внимание: DATABASE_URL не задана!');
+} else {
+  mongoose.connect(MONGO_URL)
+    .then(() => console.log('✅ Успешное подключение к MongoDB'))
+    .catch(err => console.error('❌ Ошибка подключения к MongoDB:', err));
+}
+
+// 4. Схема игрока в базе данных
+const UserSchema = new mongoose.Schema({
+  telegramId: { type: String, required: true, unique: true },
+  username: { type: String, required: true },
+  gender: { type: String, default: 'male' },
+  resources: {
+    energy: { type: Number, default: 120 },
+    parts: { type: Number, default: 450 },
+    food: { type: Number, default: 85 },
+    people: { type: Number, default: 12 },
+    stars: { type: Number, default: 150 }
+  },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const User = mongoose.model('User', UserSchema);
+
+// === API ЭНДПОИНТЫ ДЛЯ ФРОНТЕНДА ===
+
+// Проверка статуса сервера
 app.get('/', (req, res) => {
-  res.json({ status: 'ONLINE', message: 'CyberZone: Blackout API is running' });
-});
-
-// 1. Авторизация / Регистрация игрока
-app.post('/api/auth', (req, res) => {
-  const { telegramId, username, gender } = req.body;
-  
-  // Здесь в будущем будет запись в PostgreSQL (через pg / prisma)
-  console.log(`[AUTH] Игрок подключился: ID=${telegramId}, Ник=${username}, Пол=${gender}`);
-  
-  res.json({
-    success: true,
-    message: 'Оператор успешно зарегистрирован в сети',
-    player: { telegramId, username, gender, energy: 120, parts: 450, food: 85 }
+  res.json({ 
+    status: 'ONLINE', 
+    message: 'CyberZone: Blackout API Connected',
+    botActive: !!TG_BOT_TOKEN 
   });
 });
 
-// 2. Форсаж генератора (Экшен на базе)
-app.post('/api/base/upgrade-generator', (req, res) => {
-  const { telegramId } = req.body;
-  // Логика добавления энергии
-  res.json({
-    success: true,
-    message: 'Генератор успешно разогнан',
-    addedEnergy: 20,
-    currentEnergy: 140
-  });
+// Регистрация / Авторизация при входе
+app.post('/api/auth', async (req, res) => {
+  try {
+    const { telegramId, username, gender } = req.body;
+    if (!telegramId || !username) {
+      return res.status(400).json({ success: false, error: 'Недостаточно данных' });
+    }
+
+    let user = await User.findOne({ telegramId });
+    if (!user) {
+      user = new User({ telegramId, username, gender: gender || 'male' });
+      await user.save();
+    }
+
+    res.json({ success: true, player: user });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
-// 3. Поиск противника для ПвП-рейда (Clash of Clans стиль)
+// Форсаж генератора (+20 энергии)
+app.post('/api/base/upgrade-generator', async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+    let user = await User.findOne({ telegramId });
+    
+    if (!user) {
+      // Фолбек если игрока еще нет в базе
+      return res.json({ success: true, currentEnergy: 140, message: 'Генератор разогнан (+20 энергии)' });
+    }
+
+    user.resources.energy = Math.min(200, user.resources.energy + 20);
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      currentEnergy: user.resources.energy, 
+      message: 'Генератор успешно разогнан (+20 энергии)' 
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Поиск противника для ПвП-рейда
 app.get('/api/pvp/find-target', (req, res) => {
   const enemiesPool = [
-    { id: 1, name: "Убежище #4092 [Sektor]", lvl: 2, energy: 90, parts: 210, food: 35 },
-    { id: 2, name: "Бункер «Омега» [Ghost]", lvl: 3, energy: 150, parts: 450, food: 80 },
-    { id: 3, name: "Цитадель «Ржавчина» [Rust]", lvl: 1, energy: 60, parts: 120, food: 20 },
-    { id: 4, name: "Терминал X [CyberLord]", lvl: 4, energy: 240, parts: 680, food: 120 }
+    { name: "Убежище #4092 [Sektor]", lvl: 2, energy: 90, parts: 210, food: 35 },
+    { name: "Бункер «Омега» [Ghost]", lvl: 3, energy: 150, parts: 450, food: 80 },
+    { name: "Цитадель «Ржавчина» [Rust]", lvl: 1, energy: 60, parts: 120, food: 20 },
+    { name: "Терминал X [CyberLord]", lvl: 4, energy: 240, parts: 680, food: 120 }
   ];
-  
-  const randomEnemy = enemiesPool[Math.floor(Math.random() * enemiesPool.length)];
-  res.json({ success: true, target: randomEnemy });
+  const target = enemiesPool[Math.floor(Math.random() * enemiesPool.length)];
+  res.json({ success: true, target });
 });
 
-// 4. Проведение ПвП атаки
-app.post('/api/pvp/attack', (req, res) => {
-  const { attackerId, targetId } = req.body;
-  // Здесь расчет победы/поражения
-  res.json({
-    success: true,
-    victory: true,
-    loot: { parts: 320, energy: 80 },
-    message: 'Победа! Ресурсы вывезены на склад.'
+// Проведение ПвП атаки
+app.post('/api/pvp/attack', async (req, res) => {
+  res.json({ 
+    success: true, 
+    victory: true, 
+    loot: { parts: 320, energy: 80 }, 
+    message: '🏆 Победа! Захвачено: +320 деталей и +80 энергии.' 
   });
+});
+
+// Наем специалиста
+app.post('/api/squad/hire', async (req, res) => {
+  res.json({ success: true, message: 'Новый специалист успешно завербован.' });
+});
+
+// Покупка на Черном рынке
+app.post('/api/market/buy', async (req, res) => {
+  const { itemName, stars } = req.body;
+  res.json({ success: true, message: `Приобретено: "${itemName}" за ⭐${stars}` });
 });
 
 // Запуск сервера
 app.listen(PORT, () => {
-  console.log(`CyberZone Backend started on port ${PORT}`);
+  console.log(`🚀 Сервер запущен на порту ${PORT}`);
 });
