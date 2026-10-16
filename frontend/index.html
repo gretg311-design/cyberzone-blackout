@@ -313,7 +313,7 @@
             <div class="res-data"><span class="res-label">ЭНЕРГИЯ</span><span class="res-value" id="res-energy">0<small>/200</small></span></div>
           </div>
           <div class="res-card">
-            <svg class="ico" style="color:var(--accent-neon)" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <svg class="ico" style="color:var(--accent-neon)" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             <div class="res-data"><span class="res-label">ДЕТАЛИ</span><span class="res-value" id="res-parts">0</span></div>
           </div>
           <div class="res-card">
@@ -433,13 +433,12 @@
   </div>
 
   <script>
-    // ЗАМЕНИ ЭТУ ССЫЛКУ НА РЕАЛЬНЫЙ АДРЕС ТВОЕГО БЭКЕНДА НА VERCEL ИЛИ RENDER
-    const API_URL = 'https://tvoj-backend.vercel.app/api';
+    // Ссылка на твой бэкенд на Vercel
+    const API_URL = 'https://cyberzone-blackout.vercel.app/api';
 
     let playerData = null;
 
     window.onload = async function() {
-      // Имитация загрузки 
       let progress = 0;
       const fillBar = document.getElementById('loader-fill');
       const percentText = document.getElementById('loader-percent');
@@ -451,7 +450,6 @@
           progress = 100;
           clearInterval(loadInterval);
           
-          // Подгружаем данные игрока с бэкенда перед скрытием лоадера
           await initPlayerSession();
 
           loaderScreen.style.opacity = '0';
@@ -462,7 +460,6 @@
       }, 100);
     };
 
-    // Авторизация и загрузка данных из базы через бэк
     async function initPlayerSession() {
       const tgUser = window.Telegram.WebApp.initDataUnsafe?.user || { id: "58923411", username: "cyber_operator" };
       
@@ -490,7 +487,6 @@
       }
     }
 
-    // Обновление интерфейса реальными данными из БД
     function updateUI(player) {
       if (!player) return;
       document.getElementById('user-tag').innerText = `ID: ${player.telegramId} // @${player.username}`;
@@ -507,7 +503,6 @@
       }
     }
 
-    // Форсаж генератора (запрос в базу)
     async function upgradeGenerator() {
       try {
         const tgUser = window.Telegram.WebApp.initDataUnsafe?.user || { id: "58923411" };
@@ -519,14 +514,13 @@
         const data = await response.json();
         if (data.success) {
           showToast(data.message);
-          initPlayerSession(); // Перезапрашиваем актуальные данные
+          initPlayerSession();
         }
       } catch (e) {
         showToast('Ошибка соединения с сервером');
       }
     }
 
-    // Поиск противника через бэкенд
     async function findTarget() {
       showToast('📡 Сканирование секторов через сервер...');
       try {
