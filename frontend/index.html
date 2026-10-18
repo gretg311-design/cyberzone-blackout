@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>CyberZone: Blackout</title>
   
-  <!-- Подключаем Telegram WebApp скрипт -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   
   <style>
@@ -71,6 +70,39 @@
     .loader-bar-fill { width: 0%; height: 100%; background: var(--accent-neon); box-shadow: 0 0 10px var(--accent-neon); transition: width 0.2s linear; }
     .loader-percent { font-size: 12px; color: var(--text-sub); }
 
+    /* Модалка регистрации */
+    #reg-modal {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(7, 9, 14, 0.98); backdrop-filter: blur(10px);
+      z-index: 10000; display: none; justify-content: center; align-items: center; padding: 15px;
+    }
+
+    .reg-card {
+      background: var(--card-bg); border: 1px solid var(--accent-neon);
+      box-shadow: 0 0 30px rgba(0, 255, 204, 0.15); border-radius: 12px; padding: 20px; width: 100%; max-width: 400px;
+    }
+
+    .reg-title { font-size: 16px; color: var(--accent-neon); margin-bottom: 4px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+    .reg-subtitle { font-size: 10px; color: var(--text-sub); margin-bottom: 15px; border-bottom: 1px dashed var(--card-border); padding-bottom: 8px; }
+    .form-group { margin-bottom: 12px; position: relative; }
+    .form-group label { display: block; font-size: 10px; color: var(--text-sub); margin-bottom: 4px; }
+    .cyber-input { width: 100%; background: #05070a; border: 1px solid var(--card-border); color: var(--text-main); padding: 10px; border-radius: 6px; font-family: inherit; font-size: 12px; outline: none; }
+    .cyber-input:focus { border-color: var(--accent-neon); }
+
+    /* Шторка выбора пола */
+    .custom-select { position: relative; width: 100%; background: #05070a; border: 1px solid var(--card-border); border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .select-trigger { padding: 10px; display: flex; justify-content: space-between; align-items: center; color: var(--text-main); }
+    .select-options { position: absolute; top: 105%; left: 0; right: 0; background: #0e131f; border: 1px solid var(--accent-neon); border-radius: 6px; display: none; z-index: 50; box-shadow: 0 10px 25px rgba(0,0,0,0.7); overflow: hidden; }
+    .custom-select.open .select-options { display: block; }
+    .select-option { padding: 12px 10px; transition: background 0.1s; border-bottom: 1px solid #141d2f; }
+    .select-option:hover { background: rgba(0, 255, 204, 0.1); color: var(--accent-neon); }
+
+    .check-group { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
+    .check-item { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-main); cursor: pointer; }
+    .cyber-checkbox { appearance: none; width: 18px; height: 18px; background: #05070a; border: 1px solid var(--card-border); border-radius: 4px; cursor: pointer; position: relative; flex-shrink: 0; }
+    .cyber-checkbox:checked { background: var(--accent-neon); border-color: var(--accent-neon); }
+    .cyber-checkbox:checked::after { content: '✓'; position: absolute; color: #000; font-weight: bold; font-size: 12px; top: -1px; left: 3px; }
+
     /* Шапка */
     .cyber-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--card-border); padding-bottom: 10px; margin-bottom: 12px; }
     .user-info h2 { font-size: 14px; color: var(--accent-neon); letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
@@ -108,7 +140,7 @@
     .progress-container { background: #05070a; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 12px; border: 1px solid #141d2f; }
     .progress-bar { background: var(--accent-neon); height: 100%; box-shadow: 0 0 8px var(--accent-neon); }
 
-    /* Профиль */
+    /* Профиль и настройки */
     .profile-info-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; padding: 6px 0; border-bottom: 1px solid #141d2f; }
     .profile-val { color: var(--accent-neon); font-weight: bold; }
 
@@ -137,7 +169,7 @@
     .modal-title { font-size: 14px; font-weight: bold; color: var(--accent-neon); }
     .close-btn { background: none; border: none; color: var(--text-sub); font-size: 18px; cursor: pointer; padding: 4px; }
 
-    /* Рынок */
+    /* Магазин */
     .market-header { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.2); padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; }
     .market-balance { display: flex; align-items: center; gap: 6px; color: var(--accent-star); font-weight: bold; font-size: 13px; }
     .market-item { display: flex; justify-content: space-between; align-items: center; background: #070a10; padding: 12px; border-radius: 8px; border: 1px solid #121a29; margin-bottom: 8px; }
@@ -147,6 +179,7 @@
 
     /* Кнопки */
     .cyber-btn { width: 100%; padding: 10px; border: none; font-weight: bold; cursor: pointer; border-radius: 6px; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; display: flex; justify-content: center; align-items: center; gap: 6px; }
+    .cyber-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .cyber-btn.primary { background: var(--accent-neon); color: #07090e; box-shadow: 0 0 10px rgba(0, 255, 204, 0.2); }
     .cyber-btn.danger { background: var(--accent-danger); color: #fff; box-shadow: 0 0 10px rgba(255, 0, 85, 0.2); }
 
@@ -170,6 +203,41 @@
       <div class="loader-status-text" id="loader-text">Инициализация нейро-модуля...</div>
       <div class="loader-bar-bg"><div class="loader-bar-fill" id="loader-fill"></div></div>
       <div class="loader-percent" id="loader-percent">0%</div>
+    </div>
+  </div>
+
+  <!-- Модалка первой регистрации (позывной и пол) -->
+  <div id="reg-modal">
+    <div class="reg-card">
+      <h2 class="reg-title">ИНИЦИАЛИЗАЦИЯ ОПЕРАТОРА</h2>
+      <p class="reg-subtitle">Настройка профиля в автономной сети</p>
+
+      <div class="form-group">
+        <label>ПОЗЫВНОЙ</label>
+        <input type="text" id="reg-name" class="cyber-input" placeholder="Введите позывной" oninput="validateForm()">
+      </div>
+
+      <div class="form-group">
+        <label>НЕЙРО-ИДЕНТИФИКАЦИЯ (ПОЛ)</label>
+        <div class="custom-select" id="gender-select" onclick="toggleDropdown(event)">
+          <div class="select-trigger">
+            <span id="selected-gender-text">Мужской [М]</span>
+            <svg class="ico" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="select-options">
+            <div class="select-option" onclick="selectGender('male', 'Мужской [М]')">Мужской [М]</div>
+            <div class="select-option" onclick="selectGender('female', 'Женский [Ж]')">Женский [Ж]</div>
+            <div class="select-option" onclick="selectGender('unspecified', 'Не указан [X]')">Не указан [X]</div>
+          </div>
+        </div>
+        <input type="hidden" id="reg-gender" value="male">
+      </div>
+
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" id="check-terms" class="cyber-checkbox" onchange="validateForm()"><span>Подтверждаю синхронизацию сети</span></label>
+      </div>
+
+      <button id="reg-btn" class="cyber-btn primary" disabled onclick="submitRegistration()">ВОЙТИ В СИСТЕМУ</button>
     </div>
   </div>
 
@@ -322,10 +390,10 @@
   </div>
 
   <script>
-    // Адрес твоего задеплоенного бэкенда
     const API_URL = 'https://cyberzone-blackout.vercel.app/api';
-
     let playerData = null;
+    let currentTelegramId = null;
+    let currentUsername = null;
 
     window.onload = async function() {
       let progress = 0;
@@ -339,52 +407,67 @@
           progress = 100;
           clearInterval(loadInterval);
           
-          await initPlayerSession();
+          await checkAndInitSession();
 
           loaderScreen.style.opacity = '0';
           setTimeout(() => { loaderScreen.style.display = 'none'; }, 500);
         }
         fillBar.style.width = progress + '%';
         percentText.innerText = progress + '%';
-      }, 50);
+      }, 40);
     };
 
-    // Авторизация и получение данных игрока через реальный Telegram WebApp или фоллбек
-    async function initPlayerSession() {
-      // Инициализация Telegram WebApp объекта
+    async function checkAndInitSession() {
       const tg = window.Telegram?.WebApp;
       if (tg) {
-        tg.expand();
+        try { tg.ready(); tg.expand(); } catch(e) {}
       }
       
       const tgUser = tg?.initDataUnsafe?.user;
 
-      // Берем реальный ID и имя из Telegram, либо тестовые заглушки если открыто в обычном браузере
-      const telegramId = tgUser?.id ? String(tgUser.id) : "58923411";
-      const username = tgUser?.username || tgUser?.first_name || "cyber_operator";
+      if (tgUser && tgUser.id) {
+        currentTelegramId = String(tgUser.id);
+        currentUsername = tgUser.username || tgUser.first_name || `operator_${tgUser.id}`;
+        await authorizePlayer(currentTelegramId, currentUsername, "male");
+      } else {
+        // Если открыто с ПК или без авторизации Telegram — показываем окно ввода позывного
+        let savedId = localStorage.getItem('cz_tg_id');
+        let savedName = localStorage.getItem('cz_name');
+        if (savedId && savedName) {
+          currentTelegramId = savedId;
+          currentUsername = savedName;
+          await authorizePlayer(currentTelegramId, currentUsername, "male");
+        } else {
+          currentTelegramId = 'pc_' + Math.floor(Math.random() * 899999 + 100000);
+          document.getElementById('reg-name').value = 'Operator_' + Math.floor(Math.random() * 900 + 100);
+          document.getElementById('reg-modal').style.display = 'flex';
+          validateForm();
+        }
+      }
+    }
 
+    async function authorizePlayer(telegramId, username, gender) {
       try {
         const response = await fetch(`${API_URL}/auth`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ telegramId, username })
+          body: JSON.stringify({ telegramId, username, gender })
         });
         const data = await response.json();
         
         if (data.success) {
           playerData = data.player;
           updateUI(playerData);
-          showToast('🔗 Синхронизировано с базой данных');
+          showToast(`🔗 Сход с БД выполнен`);
         } else {
-          showToast('⚠️ Ошибка авторизации');
+          showToast('⚠️ Ошибка синхронизации');
         }
       } catch (e) {
         console.error(e);
-        showToast('❌ Нет связи с сервером бэкенда');
+        showToast('❌ Ошибка связи с сервером');
       }
     }
 
-    // Обновление интерфейса данными из MongoDB
     function updateUI(player) {
       if (!player) return;
       document.getElementById('user-tag').innerText = `ID: ${player.telegramId} // @${player.username}`;
@@ -412,7 +495,7 @@
         const data = await response.json();
         if (data.success) {
           showToast(data.message);
-          initPlayerSession();
+          authorizePlayer(playerData.telegramId, playerData.username, playerData.gender);
         }
       } catch (e) {
         showToast('Ошибка соединения');
@@ -443,7 +526,7 @@
         if (data.success) {
           showToast(data.message);
           document.getElementById('enemy-card').style.display = 'none';
-          initPlayerSession();
+          authorizePlayer(playerData.telegramId, playerData.username, playerData.gender);
         }
       } catch (e) {
         showToast('Ошибка атаки');
@@ -490,6 +573,24 @@
       container.classList.add('show');
       if (toastTimer) clearTimeout(toastTimer);
       toastTimer = setTimeout(() => { container.classList.remove('show'); }, 2500);
+    }
+
+    function toggleDropdown(e) { e.stopPropagation(); document.getElementById('gender-select').classList.toggle('open'); }
+    function selectGender(val, lbl) { document.getElementById('reg-gender').value = val; document.getElementById('selected-gender-text').innerText = lbl; document.getElementById('gender-select').classList.remove('open'); }
+    function validateForm() {
+      const name = document.getElementById('reg-name').value.trim();
+      const terms = document.getElementById('check-terms').checked;
+      document.getElementById('reg-btn').disabled = !(name.length > 0 && terms);
+    }
+    async function submitRegistration() {
+      const name = document.getElementById('reg-name').value.trim();
+      const gender = document.getElementById('reg-gender').value;
+      if (!name) return;
+      
+      localStorage.setItem('cz_tg_id', currentTelegramId);
+      localStorage.setItem('cz_name', name);
+      document.getElementById('reg-modal').style.display = 'none';
+      await authorizePlayer(currentTelegramId, name, gender);
     }
   </script>
 </body>
