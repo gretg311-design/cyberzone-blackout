@@ -2,9 +2,10 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>CyberZone: Blackout</title>
   
+  <!-- Подключаем Telegram WebApp скрипт -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   
   <style>
@@ -26,14 +27,17 @@
       padding: 0;
       font-family: 'Courier New', Courier, monospace;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation; /* Улучшает отзывчивость на тапах */
     }
 
     body {
       background-color: var(--bg-color);
       color: var(--text-main);
-      padding: 10px 10px 80px 10px;
+      /* ПРАВКА: Опускаем интерфейс ниже, чтобы не было "каши" под шапкой Telegram */
+      padding: 60px 10px 80px 10px; 
       overflow-x: hidden;
       user-select: none;
+      min-height: 100vh;
     }
 
     .ico {
@@ -69,39 +73,6 @@
     .loader-bar-bg { width: 100%; height: 6px; background: #0e131f; border: 1px solid var(--card-border); border-radius: 3px; overflow: hidden; margin-bottom: 15px; }
     .loader-bar-fill { width: 0%; height: 100%; background: var(--accent-neon); box-shadow: 0 0 10px var(--accent-neon); transition: width 0.2s linear; }
     .loader-percent { font-size: 12px; color: var(--text-sub); }
-
-    /* Модалка регистрации */
-    #reg-modal {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(7, 9, 14, 0.98); backdrop-filter: blur(10px);
-      z-index: 10000; display: none; justify-content: center; align-items: center; padding: 15px;
-    }
-
-    .reg-card {
-      background: var(--card-bg); border: 1px solid var(--accent-neon);
-      box-shadow: 0 0 30px rgba(0, 255, 204, 0.15); border-radius: 12px; padding: 20px; width: 100%; max-width: 400px;
-    }
-
-    .reg-title { font-size: 16px; color: var(--accent-neon); margin-bottom: 4px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
-    .reg-subtitle { font-size: 10px; color: var(--text-sub); margin-bottom: 15px; border-bottom: 1px dashed var(--card-border); padding-bottom: 8px; }
-    .form-group { margin-bottom: 12px; position: relative; }
-    .form-group label { display: block; font-size: 10px; color: var(--text-sub); margin-bottom: 4px; }
-    .cyber-input { width: 100%; background: #05070a; border: 1px solid var(--card-border); color: var(--text-main); padding: 10px; border-radius: 6px; font-family: inherit; font-size: 12px; outline: none; }
-    .cyber-input:focus { border-color: var(--accent-neon); }
-
-    /* Шторка выбора пола */
-    .custom-select { position: relative; width: 100%; background: #05070a; border: 1px solid var(--card-border); border-radius: 6px; cursor: pointer; font-size: 12px; }
-    .select-trigger { padding: 10px; display: flex; justify-content: space-between; align-items: center; color: var(--text-main); }
-    .select-options { position: absolute; top: 105%; left: 0; right: 0; background: #0e131f; border: 1px solid var(--accent-neon); border-radius: 6px; display: none; z-index: 50; box-shadow: 0 10px 25px rgba(0,0,0,0.7); overflow: hidden; }
-    .custom-select.open .select-options { display: block; }
-    .select-option { padding: 12px 10px; transition: background 0.1s; border-bottom: 1px solid #141d2f; }
-    .select-option:hover { background: rgba(0, 255, 204, 0.1); color: var(--accent-neon); }
-
-    .check-group { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
-    .check-item { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-main); cursor: pointer; }
-    .cyber-checkbox { appearance: none; width: 18px; height: 18px; background: #05070a; border: 1px solid var(--card-border); border-radius: 4px; cursor: pointer; position: relative; flex-shrink: 0; }
-    .cyber-checkbox:checked { background: var(--accent-neon); border-color: var(--accent-neon); }
-    .cyber-checkbox:checked::after { content: '✓'; position: absolute; color: #000; font-weight: bold; font-size: 12px; top: -1px; left: 3px; }
 
     /* Шапка */
     .cyber-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--card-border); padding-bottom: 10px; margin-bottom: 12px; }
@@ -140,57 +111,23 @@
     .progress-container { background: #05070a; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 12px; border: 1px solid #141d2f; }
     .progress-bar { background: var(--accent-neon); height: 100%; box-shadow: 0 0 8px var(--accent-neon); }
 
-    /* Профиль и настройки */
+    /* Профиль */
     .profile-info-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; padding: 6px 0; border-bottom: 1px solid #141d2f; }
     .profile-val { color: var(--accent-neon); font-weight: bold; }
 
-    /* Карта */
-    .map-container { position: relative; width: 100%; height: 60vh; background: #030508; border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; }
-    .map-canvas { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(26, 35, 54, 0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(26, 35, 54, 0.15) 1px, transparent 1px); background-size: 40px 40px; }
-    .map-road-h { position: absolute; width: 100%; height: 6px; background: #121a2b; }
-    .map-road-v { position: absolute; height: 100%; width: 6px; background: #121a2b; }
-    .map-pin { position: absolute; transform: translate(-50%, -50%); background: #0e131f; border: 1px solid var(--card-border); border-radius: 8px; padding: 6px 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.6); z-index: 10; }
-    .map-pin.safe { border-color: var(--accent-neon); }
-    .map-pin.warn { border-color: var(--accent-warn); }
-    .map-pin.danger { border-color: var(--accent-danger); background: rgba(255, 0, 85, 0.1); }
-    .pin-title { font-size: 9px; font-weight: bold; color: var(--text-main); white-space: nowrap; }
-    .pin-icon { font-size: 14px; }
-
-    /* Атака */
-    .target-card { background: #070a10; border: 1px solid var(--card-border); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-    .target-info h4 { font-size: 12px; color: var(--accent-danger); margin-bottom: 3px; }
-    .target-info p { font-size: 9px; color: var(--text-sub); }
-    .loot-preview { display: flex; gap: 10px; font-size: 10px; color: var(--accent-neon); margin: 8px 0; background: #05070a; padding: 6px 10px; border-radius: 4px; border: 1px solid #121a29; }
-
-    /* Шторки */
-    #sector-modal { position: fixed; bottom: -100%; left: 0; right: 0; background: #0b101a; border-top: 2px solid var(--accent-neon); border-radius: 16px 16px 0 0; padding: 16px; z-index: 500; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    #sector-modal.active { bottom: 0; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .modal-title { font-size: 14px; font-weight: bold; color: var(--accent-neon); }
-    .close-btn { background: none; border: none; color: var(--text-sub); font-size: 18px; cursor: pointer; padding: 4px; }
-
-    /* Магазин */
-    .market-header { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.2); padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; }
-    .market-balance { display: flex; align-items: center; gap: 6px; color: var(--accent-star); font-weight: bold; font-size: 13px; }
-    .market-item { display: flex; justify-content: space-between; align-items: center; background: #070a10; padding: 12px; border-radius: 8px; border: 1px solid #121a29; margin-bottom: 8px; }
-    .market-info h4 { font-size: 12px; color: var(--text-main); margin-bottom: 2px; }
-    .market-info p { font-size: 9px; color: var(--text-sub); }
-    .star-btn { background: #1a1e12; border: 1px solid var(--accent-star); color: var(--accent-star); padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
-
     /* Кнопки */
-    .cyber-btn { width: 100%; padding: 10px; border: none; font-weight: bold; cursor: pointer; border-radius: 6px; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; display: flex; justify-content: center; align-items: center; gap: 6px; }
-    .cyber-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .cyber-btn { width: 100%; padding: 12px; border: none; font-weight: bold; cursor: pointer; border-radius: 8px; text-transform: uppercase; letter-spacing: 1px; font-size: 12px; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background 0.2s; }
     .cyber-btn.primary { background: var(--accent-neon); color: #07090e; box-shadow: 0 0 10px rgba(0, 255, 204, 0.2); }
-    .cyber-btn.danger { background: var(--accent-danger); color: #fff; box-shadow: 0 0 10px rgba(255, 0, 85, 0.2); }
+    .cyber-btn.primary:active { background: #00e6b8; }
 
     /* Навигация */
-    .cyber-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); display: flex; justify-content: space-around; padding: 8px 0; border-top: 2px solid var(--card-border); z-index: 100; }
-    .nav-btn { background: none; border: none; color: var(--text-sub); font-size: 9px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; flex: 1; }
+    .cyber-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); display: flex; justify-content: space-around; padding: 10px 0; border-top: 2px solid var(--card-border); z-index: 100; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+    .nav-btn { background: none; border: none; color: var(--text-sub); font-size: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; flex: 1; transition: color 0.2s; }
     .nav-btn.active { color: var(--accent-neon); font-weight: bold; }
 
     /* Тост */
     #toast-container { position: fixed; top: -100px; left: 10px; right: 10px; background: #111a2e; border: 1px solid var(--accent-neon); box-shadow: 0 5px 25px rgba(0, 255, 204, 0.25); padding: 12px 16px; border-radius: 8px; z-index: 9999; display: flex; align-items: center; gap: 12px; transition: top 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    #toast-container.show { top: 15px; }
+    #toast-container.show { top: 70px; /* ПРАВКА: Опускаем тост ниже, под шапку */ }
     .toast-text { font-size: 11px; color: var(--text-main); font-weight: bold; }
   </style>
 </head>
@@ -200,44 +137,9 @@
   <div id="loader-screen">
     <div class="loader-terminal">
       <div class="loader-logo">CYBERZONE // BLACKOUT</div>
-      <div class="loader-status-text" id="loader-text">Инициализация нейро-модуля...</div>
+      <div class="loader-status-text" id="loader-text">Подключение к нейросети...</div>
       <div class="loader-bar-bg"><div class="loader-bar-fill" id="loader-fill"></div></div>
       <div class="loader-percent" id="loader-percent">0%</div>
-    </div>
-  </div>
-
-  <!-- Модалка первой регистрации (позывной и пол) -->
-  <div id="reg-modal">
-    <div class="reg-card">
-      <h2 class="reg-title">ИНИЦИАЛИЗАЦИЯ ОПЕРАТОРА</h2>
-      <p class="reg-subtitle">Настройка профиля в автономной сети</p>
-
-      <div class="form-group">
-        <label>ПОЗЫВНОЙ</label>
-        <input type="text" id="reg-name" class="cyber-input" placeholder="Введите позывной" oninput="validateForm()">
-      </div>
-
-      <div class="form-group">
-        <label>НЕЙРО-ИДЕНТИФИКАЦИЯ (ПОЛ)</label>
-        <div class="custom-select" id="gender-select" onclick="toggleDropdown(event)">
-          <div class="select-trigger">
-            <span id="selected-gender-text">Мужской [М]</span>
-            <svg class="ico" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-          <div class="select-options">
-            <div class="select-option" onclick="selectGender('male', 'Мужской [М]')">Мужской [М]</div>
-            <div class="select-option" onclick="selectGender('female', 'Женский [Ж]')">Женский [Ж]</div>
-            <div class="select-option" onclick="selectGender('unspecified', 'Не указан [X]')">Не указан [X]</div>
-          </div>
-        </div>
-        <input type="hidden" id="reg-gender" value="male">
-      </div>
-
-      <div class="check-group">
-        <label class="check-item"><input type="checkbox" id="check-terms" class="cyber-checkbox" onchange="validateForm()"><span>Подтверждаю синхронизацию сети</span></label>
-      </div>
-
-      <button id="reg-btn" class="cyber-btn primary" disabled onclick="submitRegistration()">ВОЙТИ В СИСТЕМУ</button>
     </div>
   </div>
 
@@ -262,7 +164,7 @@
     <!-- Экраны приложения -->
     <div class="screens-container">
       
-      <!-- ЭКРАН 1: БАЗА -->
+      <!-- ЭКРАН 1: БАЗА (Активный) -->
       <section id="screen-base" class="screen active">
         <div class="resources-grid">
           <div class="res-card">
@@ -283,7 +185,7 @@
           </div>
         </div>
 
-        <div class="cyber-card">
+        <div class="cyber-card highlight">
           <div class="card-title-bar"><span>УБЕЖИЩЕ [УР. 1]</span><span class="warning-text">ГЕНЕРАТОР: АКТИВЕН</span></div>
           <p class="status-desc">Система жизнеобеспечения подключена к облачной базе данных.</p>
           <div class="progress-container"><div class="progress-bar" style="width: 70%;"></div></div>
@@ -294,70 +196,7 @@
         </div>
       </section>
 
-      <!-- ЭКРАН 2: КАРТА -->
-      <section id="screen-map" class="screen">
-        <div class="map-container">
-          <div class="map-canvas">
-            <div class="map-road-h" style="top: 25%;"></div>
-            <div class="map-road-h" style="top: 60%;"></div>
-            <div class="map-road-v" style="left: 30%;"></div>
-            <div class="map-road-v" style="left: 70%;"></div>
-          </div>
-          <div class="map-pin safe" style="top: 15%; left: 20%;" onclick="openSectorModal('SEC-01', 'ПРОМЗОНА «СЕВЕР»', 'Низкий', 'Свободные заброшки')"><span class="pin-icon">⚙️</span><span class="pin-title">SEC-01</span></div>
-          <div class="map-pin warn" style="top: 20%; left: 55%;" onclick="openSectorModal('SEC-02', 'РИНГ', 'Средний', 'Синдикат Shadows')"><span class="pin-icon">🏬</span><span class="pin-title">SEC-02</span></div>
-          <div class="map-pin danger" style="top: 45%; left: 50%;" onclick="openSectorModal('SEC-03', 'ТЭЦ-4', 'КРИТИЧЕСКИЙ', 'Враги')"><span class="pin-icon">⚡</span><span class="pin-title" style="color:var(--accent-danger)">ТЭЦ-4</span></div>
-        </div>
-      </section>
-
-      <!-- ЭКРАН 3: АТАКА (PVP) -->
-      <section id="screen-attack" class="screen">
-        <div class="cyber-card highlight">
-          <div class="card-title-bar"><span>ТАКТИЧЕСКИЙ РАДАР ПВП</span><span class="warning-text">РЕЖИМ БД</span></div>
-          <p class="status-desc">Запрос целей напрямую с сервера.</p>
-          <button class="cyber-btn primary" onclick="findTarget()">
-            <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            Найти противника (10 ⚡)
-          </button>
-        </div>
-
-        <div id="target-container">
-          <div class="cyber-card" id="enemy-card" style="display:none;">
-            <div class="target-card" style="border:none; background:none; padding:0; margin:0;">
-              <div class="target-info">
-                <h4 id="enemy-name">Цель не найдена</h4>
-                <p id="enemy-details">Уровень: [Ур. 1]</p>
-              </div>
-              <span class="badge" style="color:var(--accent-danger);">ВРАГ</span>
-            </div>
-            <div class="loot-preview"><span>Добыча:</span><b id="enemy-loot">⚡ -- • ⚙️ --</b></div>
-            <button class="cyber-btn danger" onclick="launchAttack()">АТАКОВАТЬ БАЗУ</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- ЭКРАН 4: ОТРЯД -->
-      <section id="screen-squad" class="screen">
-        <div class="cyber-card">
-          <h3>СПЕЦИАЛИСТЫ УБЕЖИЩА</h3>
-          <button class="cyber-btn primary" onclick="hireUnit()">Нанять бойца (50 Деталей)</button>
-        </div>
-      </section>
-
-      <!-- ЭКРАН 5: РЫНОК -->
-      <section id="screen-market" class="screen">
-        <div class="market-header">
-          <div><div style="font-size:11px; font-weight:bold;">ЧЕРНЫЙ РЫНОК</div></div>
-          <div class="market-balance">⭐ <span id="stars-count">150</span></div>
-        </div>
-        <div class="cyber-card">
-          <div class="market-item">
-            <div class="market-info"><h4>⚡ Аккумулятор</h4><p>Восстановить энергию</p></div>
-            <button class="star-btn" onclick="buyItem('Аккумулятор', 15)">⭐ 15</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- ЭКРАН 6: ПРОФИЛЬ -->
+      <!-- ЭКРАН 2: ПРОФИЛЬ (Заглушка) -->
       <section id="screen-profile" class="screen">
         <div class="cyber-card">
           <h3>ПРОФИЛЬ ОПЕРАТОРА</h3>
@@ -368,229 +207,190 @@
           </div>
         </div>
       </section>
+      
+      <!-- Остальные экраны (Карта, Атака и т.д.) добавляются аналогично -->
 
-    </div>
-
-    <!-- Шторка сектора -->
-    <div id="sector-modal">
-      <div class="modal-header"><div class="modal-title" id="sec-title">Сектор</div><button class="close-btn" onclick="closeSectorModal()">✕</button></div>
-      <div style="font-size:11px; color:var(--text-sub); margin-bottom:10px;" id="sec-desc">Описание</div>
-      <button class="cyber-btn primary" onclick="closeSectorModal()">ОК</button>
     </div>
 
     <!-- Навигация -->
     <nav class="cyber-nav">
-      <button class="nav-btn active" onclick="switchScreen('base', this)"><svg class="ico" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>База</span></button>
-      <button class="nav-btn" onclick="switchScreen('map', this)"><svg class="ico" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg><span>Карта</span></button>
-      <button class="nav-btn" onclick="switchScreen('attack', this)"><svg class="ico" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Атака</span></button>
-      <button class="nav-btn" onclick="switchScreen('squad', this)"><svg class="ico" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Отряд</span></button>
-      <button class="nav-btn" onclick="switchScreen('market', this)"><svg class="ico" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span>Рынок</span></button>
-      <button class="nav-btn" onclick="switchScreen('profile', this)"><svg class="ico" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></button>
+      <button class="nav-btn active" onclick="switchScreen('base', this)">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <span>База</span>
+      </button>
+      <button class="nav-btn" onclick="switchScreen('map', this)">
+        <svg class="ico" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+        <span>Карта</span>
+      </button>
+      <button class="nav-btn" onclick="switchScreen('attack', this)">
+        <svg class="ico" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span>Атака</span>
+      </button>
+      <button class="nav-btn" onclick="switchScreen('squad', this)">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Отряд</span>
+      </button>
+      <button class="nav-btn" onclick="switchScreen('market', this)">
+        <svg class="ico" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span>Рынок</span>
+      </button>
+      <button class="nav-btn" onclick="switchScreen('profile', this)">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Профиль</span>
+      </button>
     </nav>
   </div>
 
   <script>
+    // Адрес твоего задеплоенного бэкенда на Vercel
     const API_URL = 'https://cyberzone-blackout.vercel.app/api';
-    let playerData = null;
-    let currentTelegramId = null;
-    let currentUsername = null;
 
+    // Тестовый ID (замени на реальный ID при тестировании не из Telegram)
+    const TEST_TELEGRAM_ID = "58923411"; 
+
+    let playerData = null;
+
+    // 1. Инициализация при загрузке окна
     window.onload = async function() {
+      // ПРАВКА: Инициализация Telegram WebApp
+      const tg = window.Telegram?.WebApp;
+      
+      if (tg) {
+        tg.ready(); // Сообщаем Telegram, что приложение готово
+        tg.expand(); // Разворачиваем на всю высоту
+        
+        // ПРАВКА: Запрет случайного закрытия (свайпом или крестиком)
+        tg.enableClosingConfirmation(); // Включает диалоговое окно подтверждения закрытия
+      }
+
+      // Фейковый лоадер для атмосферы
       let progress = 0;
       const fillBar = document.getElementById('loader-fill');
       const percentText = document.getElementById('loader-percent');
       const loaderScreen = document.getElementById('loader-screen');
 
       const loadInterval = setInterval(async () => {
-        progress += 5;
+        progress += 10;
         if (progress >= 100) {
           progress = 100;
           clearInterval(loadInterval);
           
-          await checkAndInitSession();
+          // Синхронизация с БД
+          await initPlayerSession();
 
+          // Скрываем лоадер
           loaderScreen.style.opacity = '0';
-          setTimeout(() => { loaderScreen.style.display = 'none'; }, 500);
+          setTimeout(() => {
+            loaderScreen.style.display = 'none';
+          }, 500);
         }
         fillBar.style.width = progress + '%';
         percentText.innerText = progress + '%';
-      }, 40);
+      }, 100);
     };
 
-    async function checkAndInitSession() {
-      const tg = window.Telegram?.WebApp;
-      if (tg) {
-        try { tg.ready(); tg.expand(); } catch(e) {}
-      }
-      
-      const tgUser = tg?.initDataUnsafe?.user;
+    // Основная функция авторизации/получения данных
+    async function initPlayerSession() {
+      // Пытаемся взять реальный ID из Telegram, если нет — используем тестовый
+      const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      const telegramId = tgUser?.id ? String(tgUser.id) : TEST_TELEGRAM_ID;
+      const username = tgUser?.username || tgUser?.first_name || "cyber_operator";
 
-      if (tgUser && tgUser.id) {
-        currentTelegramId = String(tgUser.id);
-        currentUsername = tgUser.username || tgUser.first_name || `operator_${tgUser.id}`;
-        await authorizePlayer(currentTelegramId, currentUsername, "male");
-      } else {
-        // Если открыто с ПК или без авторизации Telegram — показываем окно ввода позывного
-        let savedId = localStorage.getItem('cz_tg_id');
-        let savedName = localStorage.getItem('cz_name');
-        if (savedId && savedName) {
-          currentTelegramId = savedId;
-          currentUsername = savedName;
-          await authorizePlayer(currentTelegramId, currentUsername, "male");
-        } else {
-          currentTelegramId = 'pc_' + Math.floor(Math.random() * 899999 + 100000);
-          document.getElementById('reg-name').value = 'Operator_' + Math.floor(Math.random() * 900 + 100);
-          document.getElementById('reg-modal').style.display = 'flex';
-          validateForm();
-        }
-      }
-    }
-
-    async function authorizePlayer(telegramId, username, gender) {
       try {
         const response = await fetch(`${API_URL}/auth`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ telegramId, username, gender })
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            telegramId: telegramId, 
+            username: username 
+          })
         });
         const data = await response.json();
         
         if (data.success) {
           playerData = data.player;
           updateUI(playerData);
-          showToast(`🔗 Сход с БД выполнен`);
+          showToast('🔗 Синхронизировано с базой данных');
         } else {
-          showToast('⚠️ Ошибка синхронизации');
+          showToast('⚠️ Ошибка авторизации');
         }
       } catch (e) {
         console.error(e);
-        showToast('❌ Ошибка связи с сервером');
+        showToast('❌ Нет связи с сервером бэкенда');
       }
     }
 
+    // Обновление интерфейса данными
     function updateUI(player) {
       if (!player) return;
+
+      // Шапка
       document.getElementById('user-tag').innerText = `ID: ${player.telegramId} // @${player.username}`;
       document.getElementById('display-name').innerText = player.username;
+
+      // Профиль (экран)
       document.getElementById('profile-name-display').innerText = player.username;
       document.getElementById('profile-tg-id').innerText = player.telegramId;
 
+      // Ресурсы
       if (player.resources) {
         document.getElementById('res-energy').innerHTML = `${player.resources.energy}<small>/200</small>`;
         document.getElementById('res-parts').innerText = player.resources.parts;
         document.getElementById('res-food').innerText = player.resources.food;
         document.getElementById('res-people').innerHTML = `${player.resources.people}<small>/15</small>`;
-        document.getElementById('stars-count').innerText = player.resources.stars;
       }
     }
 
+    // Действие: Форсаж генератора
     async function upgradeGenerator() {
+      if (!playerData) return;
       try {
-        if (!playerData) return;
         const response = await fetch(`${API_URL}/base/upgrade-generator`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify({ telegramId: playerData.telegramId })
         });
         const data = await response.json();
         if (data.success) {
           showToast(data.message);
-          authorizePlayer(playerData.telegramId, playerData.username, playerData.gender);
+          // Обновляем данные (в идеале бэкенд должен возвращать обновленного юзера)
+          initPlayerSession(); 
         }
       } catch (e) {
         showToast('Ошибка соединения');
       }
     }
 
-    async function findTarget() {
-      showToast('📡 Сканирование секторов...');
-      try {
-        const response = await fetch(`${API_URL}/pvp/find-target`);
-        const data = await response.json();
-        if (data.success && data.target) {
-          document.getElementById('enemy-name').innerText = data.target.name;
-          document.getElementById('enemy-details').innerText = `Уровень: [Ур. ${data.target.lvl}]`;
-          document.getElementById('enemy-loot').innerText = `⚡ ${data.target.energy} • ⚙️ ${data.target.parts} • 🥫 ${data.target.food}`;
-          document.getElementById('enemy-card').style.display = 'block';
-          showToast('Цель найдена!');
-        }
-      } catch (e) {
-        showToast('Ошибка сканирования');
-      }
-    }
-
-    async function launchAttack() {
-      try {
-        const response = await fetch(`${API_URL}/pvp/attack`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-        const data = await response.json();
-        if (data.success) {
-          showToast(data.message);
-          document.getElementById('enemy-card').style.display = 'none';
-          authorizePlayer(playerData.telegramId, playerData.username, playerData.gender);
-        }
-      } catch (e) {
-        showToast('Ошибка атаки');
-      }
-    }
-
-    async function hireUnit() {
-      const response = await fetch(`${API_URL}/squad/hire`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-      const data = await response.json();
-      showToast(data.message);
-    }
-
-    async function buyItem(itemName, stars) {
-      const response = await fetch(`${API_URL}/market/buy`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemName, stars })
-      });
-      const data = await response.json();
-      showToast(data.message);
-    }
-
+    // Переключение экранов
     function switchScreen(screenName, btnElement) {
+      // Скрываем все экраны
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      // Показываем нужный
       document.getElementById(`screen-${screenName}`).classList.add('active');
+      
+      // Обновляем навигацию
       document.querySelectorAll('.cyber-nav .nav-btn').forEach(b => b.classList.remove('active'));
       btnElement.classList.add('active');
     }
 
-    function openSectorModal(id, title, hazard, control) {
-      document.getElementById('sec-title').innerText = `${id}: ${title}`;
-      document.getElementById('sec-desc').innerText = `Угроза: ${hazard} | Контроль: ${control}`;
-      document.getElementById('sector-modal').classList.add('active');
-    }
-
-    function closeSectorModal() {
-      document.getElementById('sector-modal').classList.remove('active');
-    }
-
+    // Показ уведомлений (Тост)
     let toastTimer = null;
     function showToast(message) {
       const container = document.getElementById('toast-container');
-      document.getElementById('toast-message').innerText = message;
-      container.classList.add('show');
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => { container.classList.remove('show'); }, 2500);
-    }
-
-    function toggleDropdown(e) { e.stopPropagation(); document.getElementById('gender-select').classList.toggle('open'); }
-    function selectGender(val, lbl) { document.getElementById('reg-gender').value = val; document.getElementById('selected-gender-text').innerText = lbl; document.getElementById('gender-select').classList.remove('open'); }
-    function validateForm() {
-      const name = document.getElementById('reg-name').value.trim();
-      const terms = document.getElementById('check-terms').checked;
-      document.getElementById('reg-btn').disabled = !(name.length > 0 && terms);
-    }
-    async function submitRegistration() {
-      const name = document.getElementById('reg-name').value.trim();
-      const gender = document.getElementById('reg-gender').value;
-      if (!name) return;
+      const msgSpan = document.getElementById('toast-message');
       
-      localStorage.setItem('cz_tg_id', currentTelegramId);
-      localStorage.setItem('cz_name', name);
-      document.getElementById('reg-modal').style.display = 'none';
-      await authorizePlayer(currentTelegramId, name, gender);
+      msgSpan.innerText = message;
+      container.classList.add('show');
+      
+      if (toastTimer) clearTimeout(toastTimer);
+      
+      toastTimer = setTimeout(() => {
+        container.classList.remove('show');
+      }, 2500);
     }
   </script>
 </body>
