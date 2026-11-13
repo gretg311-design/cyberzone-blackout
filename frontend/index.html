@@ -34,7 +34,7 @@
     body {
       min-height: 100vh;
       min-height: 100dvh;
-      padding: calc(16px + var(--safe-top)) 12px calc(88px + var(--safe-bottom));
+      padding: 60px 10px calc(88px + var(--safe-bottom));
       overflow-x: hidden;
       background:
         radial-gradient(ellipse at 50% -20%, rgba(0,255,204,.09), transparent 55%),
@@ -208,6 +208,39 @@
     .connection-state.error { color: var(--accent-danger); }
     .connection-state.ok { color: var(--accent-neon); }
 
+
+    .api-panel { margin-top: 10px; }
+    .api-panel .cyber-btn { margin-top: 9px; }
+    .api-result {
+      display: none; margin-top: 12px; padding: 11px;
+      border: 1px solid #263750; border-radius: 8px;
+      background: rgba(5,7,10,.55); color: var(--text-main);
+      font-size: 11px; line-height: 1.5; overflow-wrap: anywhere;
+    }
+    .api-result.visible { display: block; }
+    .api-result.error { border-color: var(--accent-danger); color: #ff9bb2; }
+    .api-result.success { border-color: rgba(0,255,204,.4); }
+    .api-warning {
+      margin-top: 10px; padding: 10px; border-left: 3px solid var(--accent-warn);
+      background: rgba(255,170,0,.06); color: var(--text-sub);
+      font-size: 10px; line-height: 1.55;
+    }
+    .target-stats, .item-grid, .squad-grid {
+      display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-top: 12px;
+    }
+    .mini-stat, .item-card, .squad-card {
+      padding: 11px; border: 1px solid var(--card-border); border-radius: 8px;
+      background: rgba(5,7,10,.45); min-width: 0;
+    }
+    .mini-stat span, .item-card span, .squad-card span {
+      display: block; color: var(--text-sub); font-size: 9px; margin-bottom: 5px;
+    }
+    .mini-stat strong, .item-card strong, .squad-card strong {
+      color: var(--accent-neon); font-size: 13px; overflow-wrap: anywhere;
+    }
+    .item-card .cyber-btn, .squad-card .cyber-btn { margin-top: 10px; min-height: 38px; padding: 9px; font-size: 9px; }
+    .section-spacer { height: 10px; }
+
     @media (min-width: 600px) {
       body { max-width: 560px; margin: 0 auto; padding-right: 18px; padding-left: 18px; }
       .cyber-nav { left: 50%; width: min(100%,560px); transform: translateX(-50%); }
@@ -277,31 +310,71 @@
         </div>
       </section>
 
-      <section id="screen-map" class="screen" aria-label="Карта">
+            <section id="screen-map" class="screen" aria-label="Карта">
         <div class="cyber-card">
           <h3 class="module-title">КАРТА ОПЕРАЦИЙ</h3>
-          <p class="module-note">Раздел интерфейса подготовлен. Для отображения игровых локаций нужен соответствующий API-метод. Существующий API в этом файле не изменяется.</p>
+          <p class="status-desc">Глобальная сеть секторов и точек интереса.</p>
+          <div class="module-note">
+            <strong>КАРТА НЕ ПОДКЛЮЧЕНА К API.</strong><br>
+            В предоставленном index.js нет маршрута для списка локаций, координат, захвата территорий или состояния карты.
+            Поэтому здесь не отображаются выдуманные точки и не имитируется сохранение прогресса.
+          </div>
+          <div class="api-warning">Для полноценной карты серверу потребуется, например, GET /api/map/locations и POST /api/map/capture. Эти маршруты сейчас отсутствуют; backend не изменялся.</div>
         </div>
       </section>
 
-      <section id="screen-attack" class="screen" aria-label="Атака">
-        <div class="cyber-card">
-          <h3 class="module-title">БОЕВОЙ ВЫЛЕТ</h3>
-          <p class="module-note">Боевые действия не отправляются на сервер, поскольку адрес и формат боевого API в предоставленном коде отсутствуют. Никакие фиктивные результаты не показываются.</p>
+            <section id="screen-attack" class="screen" aria-label="Атака">
+        <div class="cyber-card api-panel">
+          <h3 class="module-title">БОЕВОЙ ВЫЛЕТ // PVP</h3>
+          <p class="status-desc">Поиск цели использует GET /api/pvp/find-target. Атака отправляет запрос на POST /api/pvp/attack.</p>
+          <button class="cyber-btn secondary" id="find-target-btn" type="button">⌕ Сканировать сектор / найти цель</button>
+          <div id="target-card" class="api-result">
+            <div class="card-title-bar"><span>ОБНАРУЖЕННАЯ ЦЕЛЬ</span><span class="warning-text">PVP</span></div>
+            <strong id="target-name">—</strong>
+            <div class="target-stats">
+              <div class="mini-stat"><span>УРОВЕНЬ</span><strong id="target-level">—</strong></div>
+              <div class="mini-stat"><span>ЭНЕРГИЯ</span><strong id="target-energy">—</strong></div>
+              <div class="mini-stat"><span>ДЕТАЛИ</span><strong id="target-parts">—</strong></div>
+              <div class="mini-stat"><span>ПРИПАСЫ</span><strong id="target-food">—</strong></div>
+            </div>
+            <button class="cyber-btn primary" id="attack-target-btn" type="button">Начать атаку</button>
+          </div>
+          <div id="attack-result" class="api-result"></div>
+          <div class="api-warning">В текущем index.js PVP-маршруты являются тестовыми заглушками: цель статическая, а POST /pvp/attack всегда отвечает успехом и не реализует бой, списание ресурсов или реальный захват добычи. Интерфейс честно показывает ответ API, но не начисляет награды локально.</div>
         </div>
       </section>
 
-      <section id="screen-squad" class="screen" aria-label="Отряд">
-        <div class="cyber-card">
-          <h3 class="module-title">ОТРЯД</h3>
-          <p class="module-note">Для загрузки состава отряда требуется серверный метод. Текущий клиент не будет создавать локальные данные, которые не сохраняются в вашей базе.</p>
+            <section id="screen-squad" class="screen" aria-label="Отряд">
+        <div class="cyber-card api-panel">
+          <h3 class="module-title">КОМПЛЕКТОВАНИЕ ОТРЯДА</h3>
+          <p class="status-desc">Найм отправляет POST /api/squad/hire. На сервере пока нет маршрута чтения состава и сохранения бойцов.</p>
+          <div class="squad-grid">
+            <div class="squad-card"><span>КЛАСС // 01</span><strong>Разведчик</strong><button class="cyber-btn secondary hire-btn" data-role="scout" type="button">Запросить найм</button></div>
+            <div class="squad-card"><span>КЛАСС // 02</span><strong>Штурмовик</strong><button class="cyber-btn secondary hire-btn" data-role="assault" type="button">Запросить найм</button></div>
+            <div class="squad-card"><span>КЛАСС // 03</span><strong>Медик</strong><button class="cyber-btn secondary hire-btn" data-role="medic" type="button">Запросить найм</button></div>
+            <div class="squad-card"><span>КЛАСС // 04</span><strong>Инженер</strong><button class="cyber-btn secondary hire-btn" data-role="engineer" type="button">Запросить найм</button></div>
+          </div>
+          <div id="squad-result" class="api-result"></div>
+          <div class="api-warning">Сейчас сервер возвращает «Боец успешно нанят», но не сохраняет бойца в MongoDB и не меняет resources.people. Это подтверждение ответа заглушки, а не фактический найм.</div>
         </div>
       </section>
 
-      <section id="screen-market" class="screen" aria-label="Рынок">
-        <div class="cyber-card">
-          <h3 class="module-title">РЫНОК</h3>
-          <p class="module-note">Торговые операции требуют серверных методов получения товаров и оформления покупки. В текущем API, указанном в исходном файле, такие методы не описаны.</p>
+            <section id="screen-market" class="screen" aria-label="Рынок">
+        <div class="cyber-card api-panel">
+          <h3 class="module-title">ЧЁРНЫЙ РЫНОК</h3>
+          <p class="status-desc">Кнопки отправляют запрос на существующий POST /api/market/buy.</p>
+          <div class="item-grid">
+            <div class="item-card"><span>ПОСТАВКА // 01</span><strong>Энергоблок</strong><button class="cyber-btn secondary buy-btn" data-item="energy_pack" type="button">Запросить покупку</button></div>
+            <div class="item-card"><span>ПОСТАВКА // 02</span><strong>Комплект деталей</strong><button class="cyber-btn secondary buy-btn" data-item="parts_pack" type="button">Запросить покупку</button></div>
+            <div class="item-card"><span>ПОСТАВКА // 03</span><strong>Рацион</strong><button class="cyber-btn secondary buy-btn" data-item="food_pack" type="button">Запросить покупку</button></div>
+            <div class="item-card"><span>ПОСТАВКА // 04</span><strong>Набор снабжения</strong><button class="cyber-btn secondary buy-btn" data-item="supply_pack" type="button">Запросить покупку</button></div>
+          </div>
+          <div id="market-result" class="api-result"></div>
+          <div class="api-warning">Текущий серверный маршрут всегда возвращает «Товар приобретен», но не проверяет баланс, не списывает ресурсы и не выдаёт товар. Цены намеренно не указаны: сервер их не предоставляет.</div>
+        </div>
+        <div class="cyber-card api-panel">
+          <h3 class="module-title">ПОДДЕРЖАТЬ ПРОЕКТ // DONATE</h3>
+          <div class="module-note"><strong>ПЛАТЕЖИ НЕ ПОДКЛЮЧЕНЫ.</strong><br>В API нет платёжного маршрута, создания счёта, проверки оплаты или выдачи донат-наград. Не вводите платёжные данные в этот раздел.</div>
         </div>
       </section>
 
@@ -553,6 +626,121 @@
       }
     }
 
+
+    let currentTarget = null;
+    let isPvpBusy = false;
+
+    function showApiResult(elementId, message, state = "success") {
+      const element = $(elementId);
+      element.textContent = String(message || "Сервер не вернул сообщение.");
+      element.className = `api-result visible ${state}`;
+    }
+
+    async function findPvpTarget() {
+      const button = $("find-target-btn");
+      button.disabled = true;
+      button.textContent = "СКАНИРОВАНИЕ...";
+      try {
+        const data = await requestJson(`${API_URL}/pvp/find-target`, { method: "GET" });
+        if (data?.success !== true || !data.target) {
+          throw new Error(data?.error || data?.message || "Цель не найдена.");
+        }
+        currentTarget = data.target;
+        $("target-name").textContent = data.target.name || "Неизвестная цель";
+        $("target-level").textContent = normalizeDisplayValue(data.target.lvl);
+        $("target-energy").textContent = normalizeDisplayValue(data.target.energy);
+        $("target-parts").textContent = normalizeDisplayValue(data.target.parts);
+        $("target-food").textContent = normalizeDisplayValue(data.target.food);
+        $("target-card").classList.add("visible");
+        showApiResult("attack-result", "Цель получена от сервера. Внимание: текущая боевая логика на сервере тестовая.");
+      } catch (error) {
+        currentTarget = null;
+        $("target-card").classList.remove("visible");
+        showApiResult("attack-result", error.message, "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "⌕ Сканировать сектор / найти цель";
+      }
+    }
+
+    async function attackPvpTarget() {
+      if (!currentTarget || isPvpBusy) return;
+      isPvpBusy = true;
+      const button = $("attack-target-btn");
+      button.disabled = true;
+      button.textContent = "ОТПРАВКА...";
+      try {
+        const identity = getSessionIdentity();
+        const data = await requestJson(`${API_URL}/pvp/attack`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telegramId: String(playerData?.telegramId || identity.telegramId),
+            targetName: String(currentTarget.name || "")
+          })
+        });
+        if (data?.success !== true) throw new Error(data?.error || data?.message || "Сервер отклонил атаку.");
+        showApiResult("attack-result",
+          `Ответ API: ${data.message || "Запрос принят."} Текущая версия сервера не выполняет расчёт боя и не начисляет добычу.`);
+      } catch (error) {
+        showApiResult("attack-result", error.message, "error");
+      } finally {
+        isPvpBusy = false;
+        button.disabled = false;
+        button.textContent = "Начать атаку";
+      }
+    }
+
+    async function requestSquadHire(role, button) {
+      const previous = button.textContent;
+      button.disabled = true;
+      button.textContent = "ОТПРАВКА...";
+      try {
+        const identity = getSessionIdentity();
+        const data = await requestJson(`${API_URL}/squad/hire`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telegramId: String(playerData?.telegramId || identity.telegramId),
+            role
+          })
+        });
+        if (data?.success !== true) throw new Error(data?.error || data?.message || "Найм отклонён.");
+        showApiResult("squad-result",
+          `Ответ API: ${data.message || "Запрос принят."} Сервер пока не сохраняет бойца и не обновляет состав отряда.`);
+      } catch (error) {
+        showApiResult("squad-result", error.message, "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = previous;
+      }
+    }
+
+    async function requestMarketBuy(itemId, button) {
+      const previous = button.textContent;
+      button.disabled = true;
+      button.textContent = "ОТПРАВКА...";
+      try {
+        const identity = getSessionIdentity();
+        const data = await requestJson(`${API_URL}/market/buy`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telegramId: String(playerData?.telegramId || identity.telegramId),
+            itemId
+          })
+        });
+        if (data?.success !== true) throw new Error(data?.error || data?.message || "Покупка отклонена.");
+        showApiResult("market-result",
+          `Ответ API: ${data.message || "Запрос принят."} Сервер пока не проверяет оплату ресурсами и не выдаёт предмет.`);
+      } catch (error) {
+        showApiResult("market-result", error.message, "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = previous;
+      }
+    }
+
     function switchScreen(screenName, button) {
       const target = $(`screen-${screenName}`);
       if (!target) {
@@ -615,6 +803,14 @@
     document.addEventListener("DOMContentLoaded", () => {
       $("upgrade-generator-btn").addEventListener("click", upgradeGenerator);
       $("refresh-session-btn").addEventListener("click", () => initPlayerSession());
+      $("find-target-btn").addEventListener("click", findPvpTarget);
+      $("attack-target-btn").addEventListener("click", attackPvpTarget);
+      document.querySelectorAll(".hire-btn").forEach((button) => {
+        button.addEventListener("click", () => requestSquadHire(button.dataset.role, button));
+      });
+      document.querySelectorAll(".buy-btn").forEach((button) => {
+        button.addEventListener("click", () => requestMarketBuy(button.dataset.item, button));
+      });
       document.querySelectorAll(".cyber-nav .nav-btn").forEach((button) => {
         button.addEventListener("click", () => switchScreen(button.dataset.screen, button));
       });
